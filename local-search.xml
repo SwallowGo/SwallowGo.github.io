@@ -4,11 +4,11 @@
   
   
   <entry>
-    <title>weekend</title>
+    <title>Git Setting in China</title>
     <link href="/2025/08/31/weekend/"/>
     <url>/2025/08/31/weekend/</url>
     
-    <content type="html"><![CDATA[<p>It is a normal weekend.<br>i </p>]]></content>
+    <content type="html"><![CDATA[<p>I often get the following error when I run the git command to connect to the github address：<br>fatal: unable to access ‘<a href="https://github.com/SwallowGo/SwallowGo.github.io.git/">https://github.com/SwallowGo/SwallowGo.github.io.git/</a>‘: Failed to connect to 123.0.0.1 port 7890 after 21069 ms: Couldn’t connect to server</p><p>Even if i turn on the Clash app to proxy my network!<br>After broswering for a while, the command of git can not  be controled by the system proxy or the TUN model.<br>It is essential to set git proxy setting.<br>There are the commands:</p><figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs stylus">git config <span class="hljs-attr">--global</span> http<span class="hljs-selector-class">.proxy</span> http:<span class="hljs-comment">//127.0.0.1:7890</span><br>git config <span class="hljs-attr">--global</span> https<span class="hljs-selector-class">.proxy</span> http:<span class="hljs-comment">//127.0.0.1:7890</span><br></code></pre></td></tr></table></figure><p>It is worked in all workspece cause the setting is global.It is a permanent command so that it will not be<br>canceled by resetting the computer.You have to exec the follows commands to cancel .</p><figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs stylus">git config <span class="hljs-attr">--global</span> <span class="hljs-attr">--unset</span> http<span class="hljs-selector-class">.proxy</span><br>git config <span class="hljs-attr">--global</span> <span class="hljs-attr">--unset</span> https.proxy<br></code></pre></td></tr></table></figure>]]></content>
     
     
     
