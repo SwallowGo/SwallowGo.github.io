@@ -4,13 +4,32 @@
   
   
   <entry>
-    <title>Git Setting in China</title>
+    <title>Fixing GitHub Access in China with Git Proxy Settings</title>
     <link href="/2025/08/31/weekend/"/>
     <url>/2025/08/31/weekend/</url>
     
-    <content type="html"><![CDATA[<p>I often get the following error when I run the git command to connect to the github address：<br>fatal: unable to access ‘<a href="https://github.com/SwallowGo/SwallowGo.github.io.git/">https://github.com/SwallowGo/SwallowGo.github.io.git/</a>‘: Failed to connect to 123.0.0.1 port 7890 after 21069 ms: Couldn’t connect to server</p><p>Even if i turn on the Clash app to proxy my network!<br>After broswering for a while, the command of git can not  be controled by the system proxy or the TUN model.<br>It is essential to set git proxy setting.<br>There are the commands:</p><figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs stylus">git config <span class="hljs-attr">--global</span> http<span class="hljs-selector-class">.proxy</span> http:<span class="hljs-comment">//127.0.0.1:7890</span><br>git config <span class="hljs-attr">--global</span> https<span class="hljs-selector-class">.proxy</span> http:<span class="hljs-comment">//127.0.0.1:7890</span><br></code></pre></td></tr></table></figure><p>It is worked in all workspece cause the setting is global.It is a permanent command so that it will not be<br>canceled by resetting the computer.You have to exec the follows commands to cancel .</p><figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs stylus">git config <span class="hljs-attr">--global</span> <span class="hljs-attr">--unset</span> http<span class="hljs-selector-class">.proxy</span><br>git config <span class="hljs-attr">--global</span> <span class="hljs-attr">--unset</span> https.proxy<br></code></pre></td></tr></table></figure>]]></content>
+    <content type="html"><![CDATA[<p>Developers in China often face connectivity issues when trying to access GitHub. Here’s a common error I encountered, even with my Clash proxy app running:</p><figure class="highlight vhdl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs vhdl">fatal: unable <span class="hljs-keyword">to</span> <span class="hljs-keyword">access</span> <span class="hljs-symbol">&#x27;https</span>://github.com/SwallowGo/SwallowGo.github.io.git/&#x27;: Failed <span class="hljs-keyword">to</span> connect <span class="hljs-keyword">to</span> <span class="hljs-number">123.0</span>.<span class="hljs-number">0.1</span> <span class="hljs-keyword">port</span> <span class="hljs-number">7890</span> <span class="hljs-keyword">after</span> <span class="hljs-number">21069</span> ms: Couldn<span class="hljs-symbol">&#x27;t</span> connect <span class="hljs-keyword">to</span> server<br></code></pre></td></tr></table></figure><p>The issue is that the <code>git</code> command-line tool often does not use the system’s proxy settings automatically. After some research, I found the solution is to configure Git’s proxy settings directly.</p><p>The essential commands to set a global proxy for Git are:</p><figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs stylus">git config <span class="hljs-attr">--global</span> http<span class="hljs-selector-class">.proxy</span> http:<span class="hljs-comment">//127.0.0.1:7890</span><br>git config <span class="hljs-attr">--global</span> https<span class="hljs-selector-class">.proxy</span> http:<span class="hljs-comment">//127.0.0.1:7890</span><br></code></pre></td></tr></table></figure><p>This configuration works for all your workspaces because it’s set globally. This change is persistent and will not be reset by restarting your computer.</p><p>To cancel these proxy settings later, run the following commands:</p><figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs stylus">git config <span class="hljs-attr">--global</span> <span class="hljs-attr">--unset</span> http<span class="hljs-selector-class">.proxy</span><br>git config <span class="hljs-attr">--global</span> <span class="hljs-attr">--unset</span> https.proxy<br></code></pre></td></tr></table></figure>]]></content>
     
     
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>Stuck in the Suck. How I Chose Myself Over Comfort</title>
+    <link href="/2025/08/17/Comfort/"/>
+    <url>/2025/08/17/Comfort/</url>
+    
+    <content type="html"><![CDATA[<h2 id="I-am-going-to-study-Go-Language-and-Web3-good-luck-with-me"><a href="#I-am-going-to-study-Go-Language-and-Web3-good-luck-with-me" class="headerlink" title="I am going to study Go Language and Web3, good luck with me!"></a>I am going to study Go Language and Web3, good luck with me!</h2><p>&#x2F;&#x2F;todo</p>]]></content>
+    
+    
+    
+    <tags>
+      
+      <tag>daily records</tag>
+      
+    </tags>
     
   </entry>
   
