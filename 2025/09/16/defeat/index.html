@@ -27,7 +27,7 @@
 <meta property="og:description" content="I got my first interview tonight and suffered a big defeat!The interview was start at 18:15 while i got off at 18:00. Time is limit so i hurried home.I was very shock when i joined in the video confer">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2025-09-16T14:52:48.000Z">
-<meta property="article:modified_time" content="2025-09-16T15:15:11.063Z">
+<meta property="article:modified_time" content="2025-09-16T15:35:09.291Z">
 <meta property="article:author" content="QINGDONG Zeng">
 <meta name="twitter:card" content="summary_large_image">
   
@@ -222,7 +222,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          661 words
+          720 words
         
       </span>
     
@@ -233,7 +233,7 @@
         
         
         
-          6 mins
+          7 mins
         
       </span>
     
@@ -276,8 +276,9 @@
               <div class="markdown-body">
                 
                 <p>I got my first interview tonight and suffered a big defeat!<br>The interview was start at 18:15 while i got off at 18:00. Time is limit so i hurried home.<br>I was very shock when i joined in the video conference interview! The interviewer gave me an algorithm question.<br>I was totally at a loss. I had been keeping away from algorithm question for years.<br>The result is very obvious. I can not solve it.<br>And then the interviewer asked me a lot of question about my resume.The following are the ones i did not answer well.</p>
-<h2 id="How-do-you-evaluate-the-number-of-Kafka-brokers"><a href="#How-do-you-evaluate-the-number-of-Kafka-brokers" class="headerlink" title="How do you evaluate the number of Kafka brokers?"></a>How do you evaluate the number of Kafka brokers?</h2><p>评估Kafka Broker 数量主要基于峰值数据吞吐量和单个Broker 的处理能力，计算公式大致为：所需Broker 数量&#x3D; 峰值数据流量&#x2F; 单个Broker 的最大吞吐量。此外，还需要考虑数据副本因子以保证高可用性、分区数量对Broker 负载和资源（如文件句柄）的影响，并预留50%的IO 带宽冗余。<br>具体步骤和考量因素：<br>评估业务数据吞吐量<br>数据峰值流量(BPS)：:确定集群在高峰期每秒需要处理多少数据量。这可以通过压测获得。<br>峰值生产速度(MPS)：:衡量每秒需要处理多少条消息。<br>评估单个Broker 的处理能力<br>IO 吞吐量&#x2F;网卡带宽：:单个Broker 的处理能力受到其本地磁盘IO 和网卡最大带宽的限制。<br>留出安全冗余：:建议为生产集群保留50%的IO 带宽资源冗余，以应对突发流量。<br>计算所需Broker 数量<br>基本计算：:将总的峰值数据流量除以单个Broker 的可用吞吐量，得出所需的最小Broker 数量。<br>考虑副本因子：:副本因子会增加数据传输量。需要根据副本因子和所需的总分区数来调整Broker 数量。<br>考虑分区数量的限制<br>单个Broker 的分区限制：:每个Broker 不应超过2000 个分区副本。<br>总分区数量的限制：:整个集群不应超过200,000 个分区副本。<br>分区数对性能的影响：:分区过多会增加客户端和服务器端的内存开销、文件句柄开销，并可能拖慢控制器恢复速度。分区数应该与Broker 节点数成比例，一般建议是Broker 数量的整数倍。<br>考虑高可用性<br>冗余和容灾：:使用副本因子（通常为2 或3）来提高数据的可靠性。更多的副本数量虽然能提高可靠性，但会降低网络传输效率。<br>Broker 数量和分区分布：:适当增加Broker 节点数量，可以分散分区负载，提高集群在单个Broker 故障时的可用性。<br>进行基准测试和调优<br>性能测试：:在实际的生产环境部署前，进行基准测试以验证吞吐量、延迟和稳定性，并找到最佳的分区和Broker 数量配置。<br>持续监控：:在生产环境中持续监控Broker 的资源使用率，并根据实际情况调整Broker 数量和分区配置。</p>
-<h2 id="How-to-divide-MySQL-into-libraries-and-how-to-handle-cross-store-transactions"><a href="#How-to-divide-MySQL-into-libraries-and-how-to-handle-cross-store-transactions" class="headerlink" title="How to divide MySQL into libraries and how to handle cross-store transactions?"></a>How to divide MySQL into libraries and how to handle cross-store transactions?</h2><h2 id="Explain-the-principle-of-indexing-in-MySQL"><a href="#Explain-the-principle-of-indexing-in-MySQL" class="headerlink" title="Explain the principle of indexing in MySQL"></a>Explain the principle of indexing in MySQL</h2><h2 id="The-algorithm-i-did-not-solve"><a href="#The-algorithm-i-did-not-solve" class="headerlink" title="The algorithm i did not solve"></a>The algorithm i did not solve</h2><h3 id="Sudoku"><a href="#Sudoku" class="headerlink" title="Sudoku"></a>Sudoku</h3>
+<h2 id="How-do-you-evaluate-the-number-of-Kafka-brokers"><a href="#How-do-you-evaluate-the-number-of-Kafka-brokers" class="headerlink" title="How do you evaluate the number of Kafka brokers?"></a>How do you evaluate the number of Kafka brokers?</h2><p>First of all, you have to estimate how much data your business will generate per second.<br>首先得评估你的业务大概能产生多少数据。然后根据这个数据，和能够使用得机器资源，比如磁盘和带宽去计算需要多少个broker。<br>评估Kafka Broker 数量主要基于峰值数据吞吐量和单个Broker 的处理能力，计算公式大致为：所需Broker 数量&#x3D; 峰值数据流量&#x2F; 单个Broker 的最大吞吐量。此外，还需要考虑数据副本因子以保证高可用性、分区数量对Broker 负载和资源（如文件句柄）的影响，并预留50%的IO 带宽冗余。<br>具体步骤和考量因素：<br>评估业务数据吞吐量<br>数据峰值流量(BPS)：确定集群在高峰期每秒需要处理多少数据量。这可以通过压测获得。<br>峰值生产速度(MPS)：衡量每秒需要处理多少条消息。<br>评估单个Broker 的处理能力<br>IO 吞吐量&#x2F;网卡带宽：单个Broker 的处理能力受到其本地磁盘IO 和网卡最大带宽的限制。<br>留出安全冗余：建议为生产集群保留50%的IO 带宽资源冗余，以应对突发流量。<br>计算所需Broker 数量<br>基本计算：将总的峰值数据流量除以单个Broker 的可用吞吐量，得出所需的最小Broker 数量。<br>考虑副本因子：副本因子会增加数据传输量。需要根据副本因子和所需的总分区数来调整Broker 数量。<br>考虑分区数量的限制<br>单个Broker 的分区限制：每个Broker 不应超过2000 个分区副本。<br>总分区数量的限制：整个集群不应超过200,000 个分区副本。<br>分区数对性能的影响：分区过多会增加客户端和服务器端的内存开销、文件句柄开销，并可能拖慢控制器恢复速度。分区数应该与Broker 节点数成比例，一般建议是Broker 数量的整数倍。<br>考虑高可用性<br>冗余和容灾：使用副本因子（通常为2 或3）来提高数据的可靠性。更多的副本数量虽然能提高可靠性，但会降低网络传输效率。<br>Broker 数量和分区分布：:适当增加Broker 节点数量，可以分散分区负载，提高集群在单个Broker 故障时的可用性。<br>进行基准测试和调优<br>性能测试：在实际的生产环境部署前，进行基准测试以验证吞吐量、延迟和稳定性，并找到最佳的分区和Broker 数量配置。<br>持续监控：在生产环境中持续监控Broker 的资源使用率，并根据实际情况调整Broker 数量和分区配置。</p>
+<h2 id="How-to-divide-MySQL-into-libraries-and-how-to-handle-cross-store-transactions"><a href="#How-to-divide-MySQL-into-libraries-and-how-to-handle-cross-store-transactions" class="headerlink" title="How to divide MySQL into libraries and how to handle cross-store transactions?"></a>How to divide MySQL into libraries and how to handle cross-store transactions?</h2><h2 id="Explain-the-principle-of-indexing-in-MySQL"><a href="#Explain-the-principle-of-indexing-in-MySQL" class="headerlink" title="Explain the principle of indexing in MySQL"></a>Explain the principle of indexing in MySQL</h2><h2 id="The-algorithm-i-did-not-solve"><a href="#The-algorithm-i-did-not-solve" class="headerlink" title="The algorithm i did not solve"></a>The algorithm i did not solve</h2><h3 id="Sudoku"><a href="#Sudoku" class="headerlink" title="Sudoku"></a>Sudoku</h3><p><a target="_blank" rel="noopener" href="https://leetcode.cn/problems/sudoku-solver/">https://leetcode.cn/problems/sudoku-solver/</a></p>
+
                 
               </div>
             
