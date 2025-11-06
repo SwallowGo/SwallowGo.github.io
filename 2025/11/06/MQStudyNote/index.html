@@ -1,0 +1,819 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="QINGDONG Zeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="消息队列总结作用：削峰、异步、解耦、分布式事务、延时任务、即使通讯 副作用：系统可用性降低、系统复杂性提高，还有数据一致性问题 JMS和AMQPJMS（JAVA Message Service,java 消息服务）是 Java 的消息服务，JMS 的客户端之间可以通过 JMS 服务进行异步的消息传输。JMS（JAVA Message Service，Java 消息服务）API 是一个消息服务的标准">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MQStudyNote">
+<meta property="og:url" content="https://swallowgo.github.io/2025/11/06/MQStudyNote/index.html">
+<meta property="og:site_name" content="Technology After Sunset">
+<meta property="og:description" content="消息队列总结作用：削峰、异步、解耦、分布式事务、延时任务、即使通讯 副作用：系统可用性降低、系统复杂性提高，还有数据一致性问题 JMS和AMQPJMS（JAVA Message Service,java 消息服务）是 Java 的消息服务，JMS 的客户端之间可以通过 JMS 服务进行异步的消息传输。JMS（JAVA Message Service，Java 消息服务）API 是一个消息服务的标准">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://swallowgo.github.io/images/MQStudyNote.assets/impicture_20250303_203857.png">
+<meta property="og:image" content="https://swallowgo.github.io/kafka.assets/impicture_20250303_160254.png">
+<meta property="og:image" content="https://swallowgo.github.io/kafka.assets/impicture_20250303_161104.png">
+<meta property="og:image" content="https://swallowgo.github.io/kafka.assets/impicture_20250303_200213.png">
+<meta property="og:image" content="https://swallowgo.github.io/kafka.assets/impicture_20250303_195142.png">
+<meta property="og:image" content="https://swallowgo.github.io/images/MQStudyNote.assets/image-20250303205143100.png">
+<meta property="article:published_time" content="2025-11-06T14:19:49.000Z">
+<meta property="article:modified_time" content="2025-11-06T14:24:33.477Z">
+<meta property="article:author" content="QINGDONG Zeng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://swallowgo.github.io/images/MQStudyNote.assets/impicture_20250303_203857.png">
+  
+  
+  
+  <title>MQStudyNote - Technology After Sunset</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"swallowgo.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>SwallowGo&#39;s Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>Home</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>Archives</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>Categories</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>Tags</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>About</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="MQStudyNote"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-11-06 22:19" pubdate>
+          November 6, 2025 pm
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          5.1k words
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          43 mins
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">MQStudyNote</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="消息队列总结"><a href="#消息队列总结" class="headerlink" title="消息队列总结"></a>消息队列总结</h1><p><strong>作用</strong>：削峰、异步、解耦、分布式事务、延时任务、即使通讯</p>
+<p><strong>副作用</strong>：系统可用性降低、系统复杂性提高，还有数据一致性问题</p>
+<h2 id="JMS和AMQP"><a href="#JMS和AMQP" class="headerlink" title="JMS和AMQP"></a>JMS和AMQP</h2><p>JMS（JAVA Message Service,java 消息服务）是 Java 的消息服务，JMS 的客户端之间可以通过 JMS 服务进行异步的消息传输。<strong>JMS（JAVA Message Service，Java 消息服务）API 是一个消息服务的标准或者说是规范</strong>，允许应用程序组件基于 JavaEE 平台创建、发送、接收和读取消息。它使分布式通信耦合度更低，消息服务更加可靠以及异步性。（看看就行）</p>
+<p><strong>ActiveMQ（已被淘汰） 就是基于 JMS 规范实现的。</strong></p>
+<p>AMQP，即 Advanced Message Queuing Protocol，一个提供统一消息服务的应用层标准 <strong>高级消息队列协议</strong>（二进制应用层协议），是应用层协议的一个开放标准，为面向消息的中间件设计，兼容 JMS。基于此协议的客户端与消息中间件可传递消息，并不受客户端&#x2F;中间件同产品，不同的开发语言等条件的限制。（看看就行）</p>
+<p><strong>RabbitMQ 就是基于 AMQP 协议实现的。</strong></p>
+<p><strong>对比</strong>：</p>
+<p><img src="/images/MQStudyNote.assets/impicture_20250303_203857.png" srcset="/img/loading.gif" lazyload></p>
+<p>**常见的消息队列：**Kafka、RocketMQ、RabbitMQ、Pulsar、ActiveMQ（已淘汰）</p>
+<h2 id="Kafka"><a href="#Kafka" class="headerlink" title="Kafka"></a>Kafka</h2><p><em>Kafka</em>是一种高吞吐量的分布式发布订阅消息系统（流平台），主要的业务场景是用作消息队列使用(Message Queue)。</p>
+<p>流平台具有三个关键功能：</p>
+<ol>
+<li><strong>消息队列</strong>：发布和订阅消息流，这个功能类似于消息队列，这也是 Kafka 也被归类为消息队列的原因。</li>
+<li><strong>容错的持久方式存储记录消息流</strong>：Kafka 会把消息持久化到磁盘，有效避免了消息丢失的风险。</li>
+<li><strong>流式处理平台：</strong> 在消息发布的时候进行处理，Kafka 提供了一个完整的流式处理类库。</li>
+</ol>
+<p>消息队列的引进主要是为了流量削峰、异步和解耦。</p>
+<p><strong>百度百科相关术语：</strong></p>
+<p>“Broker”    Kafka集群包含一个或多个服务器，这种服务器被称为broker。”Topic”    每条发布到Kafka集群的消息都有一个类别，这个类别被称为Topic。（物理上不同Topic的消息分开存储，逻辑上一个Topic的消息虽然保存于一个或多个broker上但用户只需指定消息的Topic即可生产或消费数据而不必关心数据存于何处）。”Partition”    Partition是物理上的概念，每个Topic包含一个或多个Partition。”Producer”    负责发布消息到Kafka broker。”Consumer”    消息消费者，向Kafka broker读取消息的客户端。”Consumer Group”    每个Consumer属于一个特定的Consumer Group（可为每个Consumer指定group name，若不指定group name则属于默认的group）。</p>
+<h3 id="kafka-install-and-start"><a href="#kafka-install-and-start" class="headerlink" title="kafka install and start"></a>kafka install and start</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_">#</span><span class="language-bash">解压</span><br>tar -xzf kafka_2.11-2.4.1.tgz<br><span class="hljs-meta prompt_">#</span><span class="language-bash">kafka的版本名称，kafka_versionA-versionB.tgz</span><br><span class="hljs-meta prompt_">#</span><span class="language-bash">versionA是开发语言scala的版本</span><br><span class="hljs-meta prompt_">#</span><span class="language-bash">versionB是kafka的发行版本</span><br></code></pre></td></tr></table></figure>
+
+<p>配置config&#x2F;services.properties和config&#x2F;zookeeper.properties，可以配置ip和端口，也可以使用默认的</p>
+<p>日志策略：</p>
+<p>kafka的日志策略在server.properties里配置</p>
+<p>目前，与日志留存方式相关的策略类型主要有两种：delete和compact。</p>
+<p>可以通过设置broker端参数log.cleanup.policy来指定集群上所有topic默认的策略类型。</p>
+<p>另外也可以通过topic级别参数cleanup.policy来为某些topic设置不同于默认值的策略类型。也可以通过命令行给指定topic添加保留时间配置：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell">./kafka-configs.sh --zookeeper localhost:2181 --alter --entity-name mytopic --entity-type topics --add-config retention.ms=86400000<br><span class="hljs-meta prompt_"># </span><span class="language-bash"> retention.ms=86400000 为一天，单位是毫秒。只支持ms，不支持hours等其他单位</span><br></code></pre></td></tr></table></figure>
+
+<p>当前log.cleanup.policy参数的默认值是[delete,compact] 0.10.1.0+</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_"># </span><span class="language-bash">Start the ZooKeeper service</span><br><span class="hljs-meta prompt_"># </span><span class="language-bash">Note: Soon, ZooKeeper will no longer be required by Apache Kafka.</span><br><span class="hljs-meta prompt_"></span><br><span class="hljs-meta prompt_">#</span><span class="language-bash">启动zookeeper</span><br><span class="hljs-meta prompt_">#</span><span class="language-bash">这是前台启动，启动以后占用当前的终端，无法进行其他操作（不推荐）</span><br><span class="hljs-meta prompt_">#</span><span class="language-bash">./zookeeper-server-start.sh ../config/zookeeper.properties</span><br><span class="hljs-meta prompt_"></span><br><span class="hljs-meta prompt_">#</span><span class="language-bash">后台启动（推荐） 指定zookeeper的配置文件启动zookeeper</span><br>./zookeeper-server-start.sh ../config/zookeeper.properties 1&gt;/dev/null 2&gt;&amp;1 &amp;<br><span class="hljs-meta prompt_"></span><br><span class="hljs-meta prompt_">#</span><span class="language-bash">启动kafka</span><br><span class="hljs-meta prompt_">#</span><span class="language-bash">后台启动kafka 指定kafka的配置文件启动kafka</span><br>./kafka-server-start.sh ../config/server.properties 1&gt;/dev/null 2&gt;&amp;1 &amp;<br></code></pre></td></tr></table></figure>
+
+<h3 id="kafka-topic"><a href="#kafka-topic" class="headerlink" title="kafka topic"></a>kafka topic</h3><h4 id="创建topic"><a href="#创建topic" class="headerlink" title="创建topic"></a>创建topic</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_">#</span><span class="language-bash">partitions：topic的分区</span><br><span class="hljs-meta prompt_">#</span><span class="language-bash">replication-factor：topic的备份</span><br><span class="hljs-meta prompt_">#</span><span class="language-bash">topic：topic的名称</span><br><span class="hljs-meta prompt_">#</span><span class="language-bash">bootstrap-server：kafka地址 如果是集群 则用--zookeeper 然后填入集群地址</span><br><span class="hljs-meta prompt_">$ </span><span class="language-bash">bin/kafka-topics.sh --create --partitions 1 --replication-factor 1 --topic quickstart-events --bootstrap-server localhost:9092</span><br></code></pre></td></tr></table></figure>
+
+<h4 id="kafka-topic-sh"><a href="#kafka-topic-sh" class="headerlink" title="kafka-topic.sh"></a>kafka-topic.sh</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_">#</span><span class="language-bash">All of Kafka<span class="hljs-string">&#x27;s command line tools have additional options: run the kafka-topics.sh command without any arguments to display #usage information. For example, it can also show you details such as the partition count of the new topic:</span></span><br><span class="hljs-meta prompt_">$ </span><span class="language-bash"><span class="hljs-string">bin/kafka-topics.sh --describe --topic quickstart-events --bootstrap-server localhost:9092</span></span><br><br>Topic: network-data-formal      PartitionCount: 3       ReplicationFactor: 1    Configs: segment.bytes=1073741824<br>        Topic: network-data-formal      Partition: 0    Leader: 0       Replicas: 0     Isr: 0<br>        Topic: network-data-formal      Partition: 1    Leader: 0       Replicas: 0     Isr: 0<br>        Topic: network-data-formal      Partition: 2    Leader: 0       Replicas: 0     Isr: 0<br></code></pre></td></tr></table></figure>
+
+<h3 id="kafka-comsumer"><a href="#kafka-comsumer" class="headerlink" title="kafka comsumer"></a>kafka comsumer</h3><h4 id="kafka-comsumer-groups-sh"><a href="#kafka-comsumer-groups-sh" class="headerlink" title="kafka-comsumer-groups.sh"></a>kafka-comsumer-groups.sh</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_">#</span><span class="language-bash">查看消费者组消费情况  一般都是 xxx.sb --desribe --** 参数值 可不带任何参数 display usage information</span><br>./kafka-consumer-groups.sh --bootstrap-server 10.32.65.170:9092 --describe --group network-group-formal<br></code></pre></td></tr></table></figure>
+
+<h3 id="kafka-API"><a href="#kafka-API" class="headerlink" title="kafka API"></a>kafka API</h3><h4 id="java-API"><a href="#java-API" class="headerlink" title="java API"></a>java API</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs xml">&lt;-- maven的客户端依赖 --&gt;<br><span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.kafka<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>kafka-clients<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>3.0.0<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br><span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br>    <br><span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.kafka<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>kafka-streams<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>3.0.0<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br><span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br></code></pre></td></tr></table></figure>
+
+<p>或者也可以使用spring集成的kafka API</p>
+<h3 id="kafka-config"><a href="#kafka-config" class="headerlink" title="kafka config"></a>kafka config</h3><h2 id="kafka-with-docker"><a href="#kafka-with-docker" class="headerlink" title="kafka with docker"></a>kafka with docker</h2><h3 id="kafka-install-with-docker-compose"><a href="#kafka-install-with-docker-compose" class="headerlink" title="kafka install with docker-compose"></a>kafka install with docker-compose</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs shell">verison: &#x27;3&#x27;<br>services:<br>    zookeeper:<br>        image: image&#x27;s address<br>        container_name: zookeeper<br>        restart: always<br>        ports:<br>            - 2181:2181<br>    kafka:<br>        image: <br>        container_name: kafka<br>        restart: always<br>        volumes:<br>            - /usr/kafka/sock:/var/run/docker.sock<br>        environment:<br>            KAFKA_ZOOKEEPER_CONNECT: zookeeper_host:port<br>            KAFKA_ADVERTISED_HOSE_NAME: host<br>            KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://host:port<br>            KAFKA_LISTENERS: PLAINTEXT://10.32.65.170:9092<br>        network_mode: host<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_">#</span><span class="language-bash">启动docker</span><br>docker-compose up -d<br></code></pre></td></tr></table></figure>
+
+
+
+
+
+<p>记kafka启动失败：</p>
+<p>![image-20220314104009062](C:\Users\admin\Desktop\The middleware\kafka.assets\image-20220314104009062.png)</p>
+<p>由于服务器重启，重启后zookeeper重新生成了clusterId，与kafka重启前记录再日志路径下的meta.properties文件里的cluserId不同，所以导致kafka加入集群失败。</p>
+<p>解决方法：修改meta.properties的clusterId为zookeeper的新集群id。</p>
+<h2 id="Kafka知识总结"><a href="#Kafka知识总结" class="headerlink" title="Kafka知识总结"></a>Kafka知识总结</h2><p><strong>消息模型</strong>：</p>
+<ul>
+<li><p>队列模型（早期消息队列的消息模型，过时）</p>
+</li>
+<li><p>发布订阅模型</p>
+<p>发布订阅模型（Pub-Sub） 使用<strong>主题（Topic）</strong> 作为消息通信载体，类似于<strong>广播模式</strong>；发布者发布一条消息，该消息通过主题传递给所有的订阅者，<strong>在一条消息广播之后才订阅的用户则能否收到消息取决于订阅用户组配置，如果配置earliest就可以从旧的开始消费，如果是latest就是最新开始消费</strong>。</p>
+<p><strong>在发布 - 订阅模型中，如果只有一个订阅者，那它和队列模型就基本是一样的了。所以说，发布 - 订阅模型在功能层面上是可以兼容队列模型的。</strong></p>
+</li>
+</ul>
+<h3 id="核心应用场景"><a href="#核心应用场景" class="headerlink" title="核心应用场景"></a>核心应用场景</h3><ol>
+<li><strong>消息队列</strong>：建立实时流数据管道，以可靠地在系统或应用程序之间获取数据。</li>
+<li><strong>数据处理：</strong> 构建实时的流数据处理程序来转换或处理数据流。</li>
+</ol>
+<h3 id="Kafka核心概念"><a href="#Kafka核心概念" class="headerlink" title="Kafka核心概念"></a>Kafka核心概念</h3><p>Producer、Consumer、Broker、Topic、Partition</p>
+<p>Kafka 将生产者发布的消息发送到 <strong>Topic（主题）</strong> 中，需要这些消息的消费者可以订阅这些 <strong>Topic（主题）</strong>，如下图所示：</p>
+<p><img src="/kafka.assets/impicture_20250303_160254.png" srcset="/img/loading.gif" lazyload></p>
+<p>上面这张图也为我们引出了，Kafka 比较重要的几个概念：</p>
+<ol>
+<li><strong>Producer（生产者）</strong> : 产生消息的一方。</li>
+<li><strong>Consumer（消费者）</strong> : 消费消息的一方。</li>
+<li><strong>Broker（代理）</strong> : 可以看作是一个独立的 Kafka 实例。多个 Kafka Broker 组成一个 Kafka Cluster。</li>
+</ol>
+<p>同时，你一定也注意到每个 Broker 中又包含了 Topic 以及 Partition 这两个重要的概念：</p>
+<ul>
+<li><strong>Topic（主题）</strong> : Producer 将消息发送到特定的主题，Consumer 通过订阅特定的 Topic(主题) 来消费消息。</li>
+<li><strong>Partition（分区）</strong> : Partition 属于 Topic 的一部分。一个 Topic 可以有多个 Partition ，并且同一 Topic 下的 Partition 可以分布在不同的 Broker 上，这也就表明一个 Topic 可以横跨多个 Broker 。这正如我上面所画的图一样。</li>
+</ul>
+<blockquote>
+<p>划重点：<strong>Kafka 中的 Partition（分区） 实际上可以对应成为消息队列中的队列。这样是不是更好理解一点？</strong></p>
+</blockquote>
+<h4 id="Kafka-的多副本机制"><a href="#Kafka-的多副本机制" class="headerlink" title="Kafka 的多副本机制"></a>Kafka 的多副本机制</h4><p>还有一点我觉得比较重要的是 Kafka 为分区（Partition）引入了多副本（Replica）机制。分区（Partition）中的多个副本之间会有一个叫做 leader 的家伙，其他副本称为 follower。我们发送的消息会被发送到 leader 副本，然后 follower 副本才能从 leader 副本中拉取消息进行同步。</p>
+<blockquote>
+<p>生产者和消费者只与 leader 副本交互。你可以理解为其他副本只是 leader 副本的拷贝，它们的存在只是为了保证消息存储的安全性。当 leader 副本发生故障时会从 follower 中选举出一个 leader,但是 follower 中如果有和 leader 同步程度达不到要求的参加不了 leader 的竞选。</p>
+</blockquote>
+<p><strong>Kafka 的多分区（Partition）以及多副本（Replica）机制有什么好处呢？</strong></p>
+<ol>
+<li>Kafka 通过给特定 Topic 指定多个 Partition, 而各个 Partition 可以分布在不同的 Broker 上, 这样便能提供比较好的并发能力（负载均衡）。</li>
+<li>Partition 可以指定对应的 Replica 数, 这也极大地提高了消息存储的安全性, 提高了容灾能力，不过也相应的增加了所需要的存储空间。</li>
+</ol>
+<h3 id="Zookeeper-在-Kafka-中的作用"><a href="#Zookeeper-在-Kafka-中的作用" class="headerlink" title="Zookeeper 在 Kafka 中的作用"></a>Zookeeper 在 Kafka 中的作用</h3><p><img src="/kafka.assets/impicture_20250303_161104.png" srcset="/img/loading.gif" lazyload></p>
+<p>ZooKeeper 主要为 Kafka 提供元数据的管理的功能。</p>
+<p>从图中我们可以看出，Zookeeper 主要为 Kafka 做了下面这些事情：</p>
+<ol>
+<li><strong>Broker 注册</strong>：在 Zookeeper 上会有一个专门<strong>用来进行 Broker 服务器列表记录</strong>的节点。每个 Broker 在启动时，都会到 Zookeeper 上进行注册，即到 <code>/brokers/ids</code> 下创建属于自己的节点。每个 Broker 就会将自己的 IP 地址和端口等信息记录到该节点中去</li>
+<li><strong>Topic 注册</strong>：在 Kafka 中，同一个<strong>Topic 的消息会被分成多个分区</strong>并将其分布在多个 Broker 上，<strong>这些分区信息及与 Broker 的对应关系</strong>也都是由 Zookeeper 在维护。比如我创建了一个名字为 my-topic 的主题并且它有两个分区，对应到 zookeeper 中会创建这些文件夹：<code>/brokers/topics/my-topic/Partitions/0</code>、<code>/brokers/topics/my-topic/Partitions/1</code></li>
+<li><strong>负载均衡</strong>：上面也说过了 Kafka 通过给特定 Topic 指定多个 Partition, 而各个 Partition 可以分布在不同的 Broker 上, 这样便能提供比较好的并发能力。 对于同一个 Topic 的不同 Partition，Kafka 会尽力将这些 Partition 分布到不同的 Broker 服务器上。当生产者产生消息后也会尽量投递到不同 Broker 的 Partition 里面。当 Consumer 消费的时候，Zookeeper 可以根据当前的 Partition 数量以及 Consumer 数量来实现动态负载均衡。</li>
+</ol>
+<blockquote>
+<p>在 Kafka 2.8 之前，Kafka 最被大家诟病的就是其重度依赖于 Zookeeper。在 Kafka 2.8 之后，引入了基于 Raft 协议的 KRaft 模式，不再依赖 Zookeeper，大大简化了 Kafka 的架构，让你可以以一种轻量级的方式来使用 Kafka。</p>
+<p>不过，要提示一下：<strong>如果要使用 KRaft 模式的话，建议选择较高版本的 Kafka，因为这个功能还在持续完善优化中。Kafka 3.3.1 版本是第一个将 KRaft（Kafka Raft）共识协议标记为生产就绪的版本。</strong></p>
+</blockquote>
+<h3 id="Kafka怎么保证消费顺序"><a href="#Kafka怎么保证消费顺序" class="headerlink" title="Kafka怎么保证消费顺序"></a>Kafka怎么保证消费顺序</h3><ul>
+<li>Kafka从设计上只保证分区的有序性，不同分区之间消费有序</li>
+<li>想要强有序，要么只是用一个分区，要么生产时指定分区或者key</li>
+</ul>
+<h3 id="Kafka重复消费、消息丢失情况和其他配置重点"><a href="#Kafka重复消费、消息丢失情况和其他配置重点" class="headerlink" title="Kafka重复消费、消息丢失情况和其他配置重点"></a>Kafka重复消费、消息丢失情况和其他配置重点</h3><ul>
+<li><p>消费者拉到消息自动提交offset但是自己挂了（消息丢失）（取消自动提交）</p>
+</li>
+<li><p>关闭自动提交offset，拉到消息后处理完还没提交offset，自己挂了（重复消费）（业务内部处理重复消费，比如说数据设置唯一id等）</p>
+</li>
+<li><p>leader 副本所在的 broker 突然挂掉，那么就要从 follower 副本重新选出一个 leader ，但是 leader 的数据还有一些没有被 follower 副本的同步的话，就会造成消息丢失（这种情况要设置acks&#x3D;all，是生产者重要的参数）</p>
+</li>
+<li><p><strong>设置 replication.factor &gt;&#x3D; 3</strong>（高可靠）</p>
+<p>副本数</p>
+<p>为了保证 leader 副本能有 follower 副本能同步消息，我们一般会为 topic 设置 <strong>replication.factor &gt;&#x3D; 3</strong>。这样就可以保证每个 分区(partition) 至少有 3 个副本。虽然造成了数据冗余，但是带来了数据的安全性</p>
+</li>
+<li><p><strong>min.insync.replicas &gt; 1</strong>（高可靠）</p>
+</li>
+</ul>
+<p>  生产者发送消息时需要的最小同步副本数</p>
+<p>  <strong>min.insync.replicas</strong> 的默认值为 1 ，在实际生产中应尽量避免默认值 1（提高了降低可用性，低了降低可靠性）（需要等待更多副本确认，影响性能）</p>
+<p>  一般推荐设置成 <strong>replication.factor &#x3D; min.insync.replicas + 1</strong></p>
+<ul>
+<li><p><strong>设置 unclean.leader.election.enable &#x3D; false</strong>（高可靠）</p>
+<p>用于控制是否允许不同步的副本（Out-of-Sync Replica, OS R）参与 Leader 选举。这个参数直接影响 Kafka 集群的可用性和数据一致性</p>
+<p>我们最开始也说了我们发送的消息会被发送到 leader 副本，然后 follower 副本才能从 leader 副本中拉取消息进行同步。多个 follower 副本之间的消息同步情况不一样，当我们配置了 <strong>unclean.leader.election.enable &#x3D; false</strong> 的话，当 leader 副本发生故障时就不会从 follower 副本中和 leader 同步程度达不到要求的副本中选择出 leader ，这样降低了消息丢失的可能性。</p>
+<p><strong>总结</strong>：高可靠和高可用二者不能兼得，需要根据具体业务进行合理的配置</p>
+<ul>
+<li>高可靠场景：min.insync.replicas不能为1，同时设置acks&#x3D;all</li>
+<li>高可用场景：min.insync.replicas&#x3D;1,acks&#x3D;1</li>
+<li>常用平衡的配置：min.insync.replicas&#x3D;2,replication.factor&#x3D;3,acks&#x3D;all</li>
+</ul>
+</li>
+</ul>
+<h3 id="Kafka重试机制"><a href="#Kafka重试机制" class="headerlink" title="Kafka重试机制"></a>Kafka重试机制</h3><ul>
+<li><p>生产重试</p>
+<p><img src="/kafka.assets/impicture_20250303_200213.png" srcset="/img/loading.gif" lazyload></p>
+</li>
+<li><p>消费重试</p>
+<p><img src="/kafka.assets/impicture_20250303_195142.png" srcset="/img/loading.gif" lazyload></p>
+</li>
+</ul>
+<h2 id="RocketMQ"><a href="#RocketMQ" class="headerlink" title="RocketMQ"></a>RocketMQ</h2><p>RocketMQ 是阿里开源的一款云原生“消息、事件、流”实时数据处理平台，借鉴了 Kafka，已经成为 Apache 顶级项目。</p>
+<p>RocketMQ 的核心特性（摘自 RocketMQ 官网）：</p>
+<ul>
+<li>云原生：生与云，长与云，无限弹性扩缩，K8s 友好</li>
+<li>高吞吐：万亿级吞吐保证，同时满足微服务与大数据场景。</li>
+<li>流处理：提供轻量、高扩展、高性能和丰富功能的流计算引擎。</li>
+<li>金融级：金融级的稳定性，广泛用于交易核心链路。</li>
+<li>架构极简：零外部依赖，Shared-nothing 架构。</li>
+<li>生态友好：无缝对接微服务、实时计算、数据湖等周边生态。</li>
+</ul>
+<p>根据官网介绍：</p>
+<blockquote>
+<p>Apache RocketMQ 自诞生以来，因其架构简单、业务功能丰富、具备极强可扩展性等特点被众多企业开发者以及云厂商广泛采用。历经十余年的大规模场景打磨，RocketMQ 已经成为业内共识的金融级可靠业务消息首选方案，被广泛应用于互联网、大数据、移动互联网、物联网等领域的业务场景。</p>
+</blockquote>
+<p>RocketMQ 官网：<a target="_blank" rel="noopener" href="https://rocketmq.apache.org/">https://rocketmq.apache.org/</a> （文档很详细，推荐阅读）</p>
+<p>RocketMQ 更新记录（可以直观看到项目是否还在维护）：<a target="_blank" rel="noopener" href="https://github.com/apache/rocketmq/releases">https://github.com/apache/rocketmq/releases</a></p>
+<h2 id="RabbitMQ"><a href="#RabbitMQ" class="headerlink" title="RabbitMQ"></a>RabbitMQ</h2><p>RabbitMQ 是采用 Erlang 语言实现 AMQP(Advanced Message Queuing Protocol，高级消息队列协议）的消息中间件，它最初起源于金融系统，用于在分布式系统中存储转发消息。</p>
+<p>RabbitMQ 发展到今天，被越来越多的人认可，这和它在易用性、扩展性、可靠性和高可用性等方面的卓著表现是分不开的。RabbitMQ 的具体特点可以概括为以下几点：</p>
+<ul>
+<li><strong>可靠性：</strong> RabbitMQ 使用一些机制来保证消息的可靠性，如持久化、传输确认及发布确认等。</li>
+<li><strong>灵活的路由：</strong> 在消息进入队列之前，通过交换器来路由消息。对于典型的路由功能，RabbitMQ 己经提供了一些内置的交换器来实现。针对更复杂的路由功能，可以将多个交换器绑定在一起，也可以通过插件机制来实现自己的交换器。这个后面会在我们讲 RabbitMQ 核心概念的时候详细介绍到。</li>
+<li><strong>扩展性：</strong> 多个 RabbitMQ 节点可以组成一个集群，也可以根据实际业务情况动态地扩展集群中节点。</li>
+<li><strong>高可用性：</strong> 队列可以在集群中的机器上设置镜像，使得在部分节点出现问题的情况下队列仍然可用。</li>
+<li><strong>支持多种协议：</strong> RabbitMQ 除了原生支持 AMQP 协议，还支持 STOMP、MQTT 等多种消息中间件协议。</li>
+<li><strong>多语言客户端：</strong> RabbitMQ 几乎支持所有常用语言，比如 Java、Python、Ruby、PHP、C#、JavaScript 等。</li>
+<li><strong>易用的管理界面：</strong> RabbitMQ 提供了一个易用的用户界面，使得用户可以监控和管理消息、集群中的节点等。在安装 RabbitMQ 的时候会介绍到，安装好 RabbitMQ 就自带管理界面。</li>
+<li><strong>插件机制：</strong> RabbitMQ 提供了许多插件，以实现从多方面进行扩展，当然也可以编写自己的插件。感觉这个有点类似 Dubbo 的 SPI 机制</li>
+</ul>
+<p>RabbitMQ 官网：<a target="_blank" rel="noopener" href="https://www.rabbitmq.com/">https://www.rabbitmq.com/</a> 。</p>
+<p>RabbitMQ 更新记录（可以直观看到项目是否还在维护）：<a target="_blank" rel="noopener" href="https://www.rabbitmq.com/news.html">https://www.rabbitmq.com/news.html</a></p>
+<h2 id="Pulsar"><a href="#Pulsar" class="headerlink" title="Pulsar"></a>Pulsar</h2><p>Pulsar 是下一代云原生分布式消息流平台，最初由 Yahoo 开发 ，已经成为 Apache 顶级项目。</p>
+<p>Pulsar 集消息、存储、轻量化函数式计算为一体，采用计算与存储分离架构设计，支持多租户、持久化存储、多机房跨区域数据复制，具有强一致性、高吞吐、低延时及高可扩展性等流数据存储特性，被看作是云原生时代实时消息流传输、存储和计算最佳解决方案。</p>
+<p>Pulsar 的关键特性如下（摘自官网）：</p>
+<ul>
+<li>是下一代云原生分布式消息流平台。</li>
+<li>Pulsar 的单个实例原生支持多个集群，可跨机房在集群间无缝地完成消息复制。</li>
+<li>极低的发布延迟和端到端延迟。</li>
+<li>可无缝扩展到超过一百万个 topic。</li>
+<li>简单的客户端 API，支持 Java、Go、Python 和 C++。</li>
+<li>主题的多种订阅模式（独占、共享和故障转移）。</li>
+<li>通过 Apache BookKeeper 提供的持久化消息存储机制保证消息传递 。</li>
+<li>由轻量级的 serverless 计算框架 Pulsar Functions 实现流原生的数据处理。</li>
+<li>基于 Pulsar Functions 的 serverless connector 框架 Pulsar IO 使得数据更易移入、移出 Apache Pulsar。</li>
+<li>分层式存储可在数据陈旧时，将数据从热存储卸载到冷&#x2F;长期存储（如 S3、GCS）中。</li>
+</ul>
+<p>Pulsar 官网：<a target="_blank" rel="noopener" href="https://pulsar.apache.org/">https://pulsar.apache.org/</a></p>
+<p>Pulsar 更新记录（可以直观看到项目是否还在维护）：<a target="_blank" rel="noopener" href="https://github.com/apache/pulsar/releases">https://github.com/apache/pulsar/releases</a></p>
+<h2 id="多种消息队列对比和总结"><a href="#多种消息队列对比和总结" class="headerlink" title="多种消息队列对比和总结"></a>多种消息队列对比和总结</h2><p><img src="/images/MQStudyNote.assets/image-20250303205143100.png" srcset="/img/loading.gif" lazyload alt="image-20250303205143100"></p>
+<ul>
+<li>ActiveMQ 的社区算是比较成熟，但是较目前来说，ActiveMQ 的性能比较差，而且版本迭代很慢，不推荐使用，已经被淘汰了。</li>
+<li>RabbitMQ 在吞吐量方面虽然稍逊于 Kafka、RocketMQ 和 Pulsar，但是由于它基于 Erlang 开发，所以并发能力很强，性能极其好，延时很低，达到微秒级。但是也因为 RabbitMQ 基于 Erlang 开发，所以国内很少有公司有实力做 Erlang 源码级别的研究和定制。如果业务场景对并发量要求不是太高（十万级、百万级），那这几种消息队列中，RabbitMQ 或许是你的首选。</li>
+<li>RocketMQ 和 Pulsar 支持强一致性，对消息一致性要求比较高的场景可以使用。</li>
+<li>RocketMQ 阿里出品，Java 系开源项目，源代码我们可以直接阅读，然后可以定制自己公司的 MQ，并且 RocketMQ 有阿里巴巴的实际业务场景的实战考验。</li>
+<li>Kafka 的特点其实很明显，就是仅仅提供较少的核心功能，但是提供超高的吞吐量，ms 级的延迟，极高的可用性以及可靠性，而且分布式可以任意扩展。同时 Kafka 最好是支撑较少的 topic 数量即可，保证其超高吞吐量。Kafka 唯一的一点劣势是有可能消息重复消费，那么对数据准确性会造成极其轻微的影响，在大数据领域中以及日志采集中，这点轻微影响可以忽略这个特性天然适合大数据实时计算以及日志收集。如果是大数据领域的实时计算、日志采集等场景，用 Kafka 是业内标准的，绝对没问题，社区活跃度很高，绝对不会黄，何况几乎是全世界这个领域的事实性规范。</li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>MQStudyNote</div>
+      <div>https://swallowgo.github.io/2025/11/06/MQStudyNote/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>Author</div>
+          <div>QINGDONG Zeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>Posted on</div>
+          <div>November 6, 2025</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>Licensed under</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - Attribution">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/09/18/Zigzag-Conversion/" title="Zigzag Conversion">
+                        <span class="hidden-mobile">Zigzag Conversion</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>Table of Contents</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">Keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>DD</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>JOJO</span></a> <br> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">Blog works best with JavaScript enabled</div>
+  </noscript>
+</body>
+</html>
