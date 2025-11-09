@@ -26,13 +26,13 @@
 <meta property="og:site_name" content="Technology After Sunset">
 <meta property="og:description" content="Disruptor了解到这个是一个比较厉害的本地内存队列，在项目中如果有需要异步任务解耦、任务调用的场景可以考虑引入。 官方文档：https:&#x2F;&#x2F;lmax-exchange.github.io&#x2F;disruptor&#x2F;user-guide&#x2F;index.html?spm&#x3D;a2c6h.12873639.article-detail.4.56ef5953JQttFi#_using_the_disruptor">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="https://swallowgo.github.io/Disruptor.assets/image-20250611201847703.png">
-<meta property="og:image" content="https://swallowgo.github.io/Disruptor.assets/image-20250617203656781.png">
+<meta property="og:image" content="https://swallowgo.github.io/images/Disruptor.assets/image-20250611201847703.png">
+<meta property="og:image" content="https://swallowgo.github.io/images/Disruptor.assets/image-20250617203656781.png">
 <meta property="article:published_time" content="2025-11-09T08:05:49.000Z">
-<meta property="article:modified_time" content="2025-11-09T08:06:03.140Z">
+<meta property="article:modified_time" content="2025-11-09T08:09:20.660Z">
 <meta property="article:author" content="QINGDONG Zeng">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://swallowgo.github.io/Disruptor.assets/image-20250611201847703.png">
+<meta name="twitter:image" content="https://swallowgo.github.io/images/Disruptor.assets/image-20250611201847703.png">
   
   
   
@@ -392,13 +392,13 @@
 </li>
 </ul>
 <h2 id="Disruptor简解"><a href="#Disruptor简解" class="headerlink" title="Disruptor简解"></a>Disruptor简解</h2><p>Disruptor官网文档：<a target="_blank" rel="noopener" href="https://lmax-exchange.github.io/disruptor/user-guide/index.html#user-guide-models">LMAX Disruptor User Guide</a></p>
-<p><img src="/Disruptor.assets/image-20250611201847703.png" srcset="/img/loading.gif" lazyload alt="image-20250611201847703"></p>
+<p><img src="/images/Disruptor.assets/image-20250611201847703.png" srcset="/img/loading.gif" lazyload alt="image-20250611201847703"></p>
 <blockquote>
 <p>上图来源于官网手册</p>
 </blockquote>
 <p>从上图中了解我们可以了解到Disruptor的一些概念。首先是生产者<code>Producer</code>，实际上Disruptor没有一个生产者的实体，如我们上文中的<code>DisruptorMqServiceImpl</code>通过<code>RingBuffer</code>获取对应序列号的消息对象<code>MessageModel</code>的引用将消息设置进去 就是一个生产的过程，这个方法可以自由被调用。此时基于等待策略等待就绪事件的对应的<code>SequenceBarrier</code>就会拿到这个消息的序列号并传递给消费者即<code>EventHandler</code>，<code>EventHandler</code>会基于当前收到的序列号到<code>RingBuffer</code>中获取对应的消息并处理。</p>
 <h3 id="Ring-Buffer"><a href="#Ring-Buffer" class="headerlink" title="Ring Buffer"></a>Ring Buffer</h3><p>顾名思义，这是一个环形的缓存区，是Disruptor的底层数据结构，这个从官网介绍说从3.0开始可以被用户手动替换，可以根据场景来替换底层存储数据结构，并非是Disruptor的核心。</p>
-<p><img src="/Disruptor.assets/image-20250617203656781.png" srcset="/img/loading.gif" lazyload alt="image-20250617203656781"></p>
+<p><img src="/images/Disruptor.assets/image-20250617203656781.png" srcset="/img/loading.gif" lazyload alt="image-20250617203656781"></p>
 <h3 id="Sequencer"><a href="#Sequencer" class="headerlink" title="Sequencer"></a>Sequencer</h3><p>Sequencer是Disruptor的真正的核心。此接口的两种实现（单生产者、多生产者）实现了生产者和消费者之间快速、正确传递数据的所有并发算法。消息的生产和消费者获取都是通过Sequencer来实现的。</p>
 <p><strong>其他的概念都不那么重要，可以去官网查阅。</strong></p>
 <h3 id="Disruptor为什么快"><a href="#Disruptor为什么快" class="headerlink" title="Disruptor为什么快"></a>Disruptor为什么快</h3><ul>
