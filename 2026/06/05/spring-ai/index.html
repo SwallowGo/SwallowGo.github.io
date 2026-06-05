@@ -1,0 +1,641 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="QINGDONG Zeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="🪙 基于 Spring WebFlux + 智能体联网（Tavily）的流式架构踩坑与实战复盘📝 业务背景为了在系统内构建一个能够实时感知加密货币市场（如 BTC、ETH）黑天鹅事件与突发利好的 Web3 实时联网量化看板，我们基于 Spring Boot 3.x + Spring WebFlux + Spring AI 架构，对接了 mimo-v2.5-pro 大模型以及 Tavily 联">
+<meta property="og:type" content="article">
+<meta property="og:title" content="spring-ai&amp;mimo模型使用&amp;Tavily搜索skill使用记录">
+<meta property="og:url" content="https://swallowgo.github.io/2026/06/05/spring-ai/index.html">
+<meta property="og:site_name" content="Technology After Sunset">
+<meta property="og:description" content="🪙 基于 Spring WebFlux + 智能体联网（Tavily）的流式架构踩坑与实战复盘📝 业务背景为了在系统内构建一个能够实时感知加密货币市场（如 BTC、ETH）黑天鹅事件与突发利好的 Web3 实时联网量化看板，我们基于 Spring Boot 3.x + Spring WebFlux + Spring AI 架构，对接了 mimo-v2.5-pro 大模型以及 Tavily 联">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2026-06-05T03:31:42.000Z">
+<meta property="article:modified_time" content="2026-06-05T03:32:59.512Z">
+<meta property="article:author" content="QINGDONG Zeng">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>spring-ai&amp;mimo模型使用&amp;Tavily搜索skill使用记录 - Technology After Sunset</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"swallowgo.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>SwallowGo&#39;s Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>Home</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>Archives</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>Categories</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>Tags</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>About</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="spring-ai&amp;mimo模型使用&amp;Tavily搜索skill使用记录"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-06-05 11:31" pubdate>
+          June 5, 2026 am
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.5k words
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          13 mins
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">spring-ai&amp;mimo模型使用&amp;Tavily搜索skill使用记录</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <hr>
+<h1 id="🪙-基于-Spring-WebFlux-智能体联网（Tavily）的流式架构踩坑与实战复盘"><a href="#🪙-基于-Spring-WebFlux-智能体联网（Tavily）的流式架构踩坑与实战复盘" class="headerlink" title="🪙 基于 Spring WebFlux + 智能体联网（Tavily）的流式架构踩坑与实战复盘"></a>🪙 基于 Spring WebFlux + 智能体联网（Tavily）的流式架构踩坑与实战复盘</h1><h2 id="📝-业务背景"><a href="#📝-业务背景" class="headerlink" title="📝 业务背景"></a>📝 业务背景</h2><p>为了在系统内构建一个能够实时感知加密货币市场（如 BTC、ETH）黑天鹅事件与突发利好的 <strong>Web3 实时联网量化看板</strong>，我们基于 <strong>Spring Boot 3.x + Spring WebFlux + Spring AI</strong> 架构，对接了 <strong>mimo-v2.5-pro</strong> 大模型以及 <strong>Tavily</strong> 联网搜索 Skill，以期实现“字如泉涌”的流式（SSE）看板分析体验。</p>
+<hr>
+<h2 id="💥-核心踩坑与技术攻坚复盘"><a href="#💥-核心踩坑与技术攻坚复盘" class="headerlink" title="💥 核心踩坑与技术攻坚复盘"></a>💥 核心踩坑与技术攻坚复盘</h2><h3 id="1-RestTemplate-默认序列化与-FastAPI-的-422-冲突"><a href="#1-RestTemplate-默认序列化与-FastAPI-的-422-冲突" class="headerlink" title="1. RestTemplate 默认序列化与 FastAPI 的 422 冲突"></a>1. RestTemplate 默认序列化与 FastAPI 的 422 冲突</h3><ul>
+<li><strong>现象描述</strong>：在本地测试触发 Tavily 搜索技能时，后端控制台高频报错 <code>422 Unprocessable Entity</code>。日志显示入参变成了类似 <code>&lt;MapN&gt;&lt;query&gt;...</code> 的 XML&#x2F;非标格式。</li>
+<li><strong>原因剖析</strong>：在使用 <code>RestTemplate</code> 异步调用 Tavily 云端 API 时，由于未显式声明请求头（<code>Content-Type</code>），Spring 内置的 MessageConverter 将裸 <code>Map</code> 隐式转换为了非 JSON 格式。而 Tavily 后端（FastAPI）对 Payload 的 Schema 校验极其严格，导致无法解析。</li>
+<li><strong>解决方案</strong>：重构请求，通过 <code>HttpHeaders</code> 显式强制指定 <code>MediaType.APPLICATION_JSON</code>，并将请求体打包进 <code>HttpEntity</code> 发送。</li>
+</ul>
+<h3 id="2-WebFlux-环境下标准-WebMVC-的-SseEmitter-缺失"><a href="#2-WebFlux-环境下标准-WebMVC-的-SseEmitter-缺失" class="headerlink" title="2. WebFlux 环境下标准 WebMVC 的 SseEmitter 缺失"></a>2. WebFlux 环境下标准 WebMVC 的 <code>SseEmitter</code> 缺失</h3><ul>
+<li><strong>现象描述</strong>：在引入 <code>spring-boot-starter-webflux</code> 的响应式架构中，代码中无法找到或导入 <code>SseEmitter</code> 类。</li>
+<li><strong>原因剖析</strong>：<code>SseEmitter</code> 是基于传统 Servlet 阻塞式容器（如 Tomcat）的组件。WebFlux 底层基于异步非阻塞的 Netty，采用 Project Reactor 的响应式流规范。</li>
+<li><strong>解决方案</strong>：顺应响应式架构，直接将 Controller 层的返回值修改为原生的 <strong><code>Flux&lt;String&gt;</code></strong>，配合 <code>produces = MediaType.TEXT_EVENT_STREAM_VALUE</code>，在 Netty 层面优雅地实现高性能、低线程消耗的 SSE 流式传输。</li>
+</ul>
+<h3 id="3-mimo-v2-5-pro-在“流式工具调用”阶段的协议失配（核心大坑）"><a href="#3-mimo-v2-5-pro-在“流式工具调用”阶段的协议失配（核心大坑）" class="headerlink" title="3. mimo-v2.5-pro 在“流式工具调用”阶段的协议失配（核心大坑）"></a>3. mimo-v2.5-pro 在“流式工具调用”阶段的协议失配（核心大坑）</h3><ul>
+<li><strong>现象描述</strong>：不触发联网功能时，接口吐字完全正常；一旦大模型触发 Tavily 搜索，Tavily 控制台打印出成功拿到字符串结果后，前端页面及后端的 <code>chatResponse</code> 流却“一片死寂”，全部为空包或 <code>null</code>。</li>
+<li><strong>原因剖析</strong>：<br>大模型的流式 Function Calling 交互遵循严格的两阶段生命周期。在第二阶段（模型拿到搜索结果准备总结输出）时，<strong><code>mimo-v2.5-pro</code> 的流式 Chunk 返回结构与 OpenAI 的标准协议存在微小差异</strong>（如正文文本所在的 JSON 字段名不一致）。这导致 Spring AI 自带的 <code>.content()</code> 提取器无法正确识别并解析其文本内容，将其全部误判为了 <code>null</code>。</li>
+<li><strong>解决方案</strong>：<br>在工程落地中对定制化非标大模型进行“流式向同步降级”。将 <code>.stream().content()</code> 重构为 <strong><code>.call().content()</code></strong>。在响应式上下文中利用 <code>Mono.fromCallable</code> 包裹同步双阶段确认逻辑，最后通过 <code>.flatMapMany(Flux::just)</code> 抹平，无缝伪装成标准 SSE 吐给前端。</li>
+</ul>
+<hr>
+<h2 id="🏗️-最终生产级闭环代码落地"><a href="#🏗️-最终生产级闭环代码落地" class="headerlink" title="🏗️ 最终生产级闭环代码落地"></a>🏗️ 最终生产级闭环代码落地</h2><h3 id="1-后端：针对-mimo-深度优化的响应式-Controller"><a href="#1-后端：针对-mimo-深度优化的响应式-Controller" class="headerlink" title="1. 后端：针对 mimo 深度优化的响应式 Controller"></a>1. 后端：针对 mimo 深度优化的响应式 Controller</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">package</span> com.crypto.backend.controller;<br><br><span class="hljs-keyword">import</span> org.springframework.ai.chat.client.ChatClient;<br><span class="hljs-keyword">import</span> org.springframework.beans.factory.annotation.Autowired;<br><span class="hljs-keyword">import</span> org.springframework.http.MediaType;<br><span class="hljs-keyword">import</span> org.springframework.web.bind.annotation.GetMapping;<br><span class="hljs-keyword">import</span> org.springframework.web.bind.annotation.RequestMapping;<br><span class="hljs-keyword">import</span> org.springframework.web.bind.annotation.RequestParam;<br><span class="hljs-keyword">import</span> org.springframework.web.bind.annotation.RestController;<br><span class="hljs-keyword">import</span> reactor.core.publisher.Flux;<br><span class="hljs-keyword">import</span> reactor.core.publisher.Mono;<br><br><span class="hljs-meta">@RestController</span><br><span class="hljs-meta">@RequestMapping(&quot;/api/chat&quot;)</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">CryptoChatFluxController</span> &#123;<br><br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">final</span> ChatClient chatClient;<br><br>    <span class="hljs-meta">@Autowired</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-title function_">CryptoChatFluxController</span><span class="hljs-params">(ChatClient.Builder chatClientBuilder)</span> &#123;<br>        <span class="hljs-comment">// 全局动态挂载 Tavily 联网技能</span><br>        <span class="hljs-built_in">this</span>.chatClient = chatClientBuilder<br>                .defaultFunctions(<span class="hljs-string">&quot;tavilySearchFunction&quot;</span>)<br>                .build();<br>    &#125;<br><br>    <span class="hljs-comment">/**</span><br><span class="hljs-comment">     * 针对 mimo-v2.5-pro 协议优化的非阻塞 SSE 接口</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-meta">@GetMapping(value = &quot;/stream&quot;, produces = MediaType.TEXT_EVENT_STREAM_VALUE)</span><br>    <span class="hljs-keyword">public</span> Flux&lt;String&gt; <span class="hljs-title function_">chatStream</span><span class="hljs-params">(<span class="hljs-meta">@RequestParam(&quot;message&quot;)</span> String message)</span> &#123;<br>        System.out.println(<span class="hljs-string">&quot;🚀 [WebFlux 接收到 mimo 提问]: &quot;</span> + message);<br><br>        <span class="hljs-comment">// 利用 Mono 异步执行双阶段工具调用确认，规避流式 Chunk 字段失配问题</span><br>        <span class="hljs-keyword">return</span> Mono.fromCallable(() -&gt; &#123;<br>                    <span class="hljs-keyword">return</span> chatClient.prompt()<br>                            .system(<span class="hljs-string">&quot;你是一个专业的 Web3 量化智能体。请结合联网搜索工具的结果，直接为用户输出深度的量化分析报告。&quot;</span>)<br>                            .user(message)<br>                            .call() <span class="hljs-comment">// 🌟 核心：改用稳定的同步call机制，确保二次推理内容不丢失</span><br>                            .content();<br>                &#125;)<br>                .flatMapMany(Flux::just) <span class="hljs-comment">// 🌟 核心：转换为 Flux 流适配前端 EventSource</span><br>                .filter(text -&gt; text != <span class="hljs-literal">null</span> &amp;&amp; !text.isEmpty())<br>                .onErrorResume(e -&gt; &#123;<br>                    e.printStackTrace();<br>                    <span class="hljs-keyword">return</span> Flux.just(<span class="hljs-string">&quot;\n[系统异常: &quot;</span> + e.getMessage() + <span class="hljs-string">&quot;]&quot;</span>);<br>                &#125;);<br>    &#125;<br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-前端：轻量级-EventSource-消费看板-index-html"><a href="#2-前端：轻量级-EventSource-消费看板-index-html" class="headerlink" title="2. 前端：轻量级 EventSource 消费看板 (index.html)"></a>2. 前端：轻量级 EventSource 消费看板 (<code>index.html</code>)</h3><p>将该页面直接放置于 Java 项目的 <code>src/main/resources/static/index.html</code> 目录下，利用 WebFlux 默认的静态资源映射直接暴露。</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><code class="hljs html"><span class="hljs-meta">&lt;!DOCTYPE <span class="hljs-keyword">html</span>&gt;</span><br><span class="hljs-tag">&lt;<span class="hljs-name">html</span> <span class="hljs-attr">lang</span>=<span class="hljs-string">&quot;zh-CN&quot;</span>&gt;</span><br><span class="hljs-tag">&lt;<span class="hljs-name">head</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">meta</span> <span class="hljs-attr">charset</span>=<span class="hljs-string">&quot;UTF-8&quot;</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">title</span>&gt;</span>Crypto AI Agent 看板<span class="hljs-tag">&lt;/<span class="hljs-name">title</span>&gt;</span><br><span class="hljs-tag">&lt;/<span class="hljs-name">head</span>&gt;</span><br><span class="hljs-tag">&lt;<span class="hljs-name">body</span> <span class="hljs-attr">style</span>=<span class="hljs-string">&quot;font-family: Arial, sans-serif; padding: 20px;&quot;</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">h2</span>&gt;</span>🪙 Web3 实时联网量化看板<span class="hljs-tag">&lt;/<span class="hljs-name">h2</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">input</span> <span class="hljs-attr">type</span>=<span class="hljs-string">&quot;text&quot;</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;msgInput&quot;</span> <span class="hljs-attr">style</span>=<span class="hljs-string">&quot;width: 450px; padding: 8px;&quot;</span> <span class="hljs-attr">value</span>=<span class="hljs-string">&quot;分析下今天BTC有什么最新的黑天鹅或者利好消息？&quot;</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">button</span> <span class="hljs-attr">onclick</span>=<span class="hljs-string">&quot;startChat()&quot;</span> <span class="hljs-attr">style</span>=<span class="hljs-string">&quot;padding: 8px 15px;&quot;</span>&gt;</span>问问AI<span class="hljs-tag">&lt;/<span class="hljs-name">button</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;chatBox&quot;</span> <span class="hljs-attr">style</span>=<span class="hljs-string">&quot;margin-top:20px; white-space: pre-wrap; background: #f5f5f5; padding: 20px; border-radius: 8px;&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span><br><br>    <span class="hljs-tag">&lt;<span class="hljs-name">script</span>&gt;</span><span class="language-javascript"></span><br><span class="language-javascript">        <span class="hljs-keyword">function</span> <span class="hljs-title function_">startChat</span>(<span class="hljs-params"></span>) &#123;</span><br><span class="language-javascript">            <span class="hljs-keyword">const</span> msg = <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">getElementById</span>(<span class="hljs-string">&#x27;msgInput&#x27;</span>).<span class="hljs-property">value</span>;</span><br><span class="language-javascript">            <span class="hljs-keyword">const</span> chatBox = <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">getElementById</span>(<span class="hljs-string">&#x27;chatBox&#x27;</span>);</span><br><span class="language-javascript">            chatBox.<span class="hljs-property">innerHTML</span> = <span class="hljs-string">&quot;⏳ AI 正在唤醒并动用 Tavily 跨海检索最新动态，请耐心等待 3~5 秒...\n&quot;</span>;</span><br><span class="language-javascript"></span><br><span class="language-javascript">            <span class="hljs-comment">// 建立纯原生 SSE 长连接</span></span><br><span class="language-javascript">            <span class="hljs-keyword">const</span> eventSource = <span class="hljs-keyword">new</span> <span class="hljs-title class_">EventSource</span>(<span class="hljs-string">`/api/chat/stream?message=<span class="hljs-subst">$&#123;<span class="hljs-built_in">encodeURIComponent</span>(msg)&#125;</span>`</span>);</span><br><span class="language-javascript"></span><br><span class="language-javascript">            eventSource.<span class="hljs-property">onmessage</span> = <span class="hljs-keyword">function</span> (<span class="hljs-params">event</span>) &#123;</span><br><span class="language-javascript">                <span class="hljs-comment">// 收到后端包装好的完整量化报告，直接渲染</span></span><br><span class="language-javascript">                chatBox.<span class="hljs-property">innerHTML</span> = event.<span class="hljs-property">data</span>;</span><br><span class="language-javascript">            &#125;;</span><br><span class="language-javascript"></span><br><span class="language-javascript">            eventSource.<span class="hljs-property">onerror</span> = <span class="hljs-keyword">function</span> (<span class="hljs-params">event</span>) &#123;</span><br><span class="language-javascript">                <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">&quot;数据传输完成，关闭长连接通道&quot;</span>);</span><br><span class="language-javascript">                eventSource.<span class="hljs-title function_">close</span>();</span><br><span class="language-javascript">            &#125;;</span><br><span class="language-javascript">        &#125;</span><br><span class="language-javascript">    </span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span><br><span class="hljs-tag">&lt;/<span class="hljs-name">body</span>&gt;</span><br><span class="hljs-tag">&lt;/<span class="hljs-name">html</span>&gt;</span><br><br></code></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="📈-总结与方法论沉淀"><a href="#📈-总结与方法论沉淀" class="headerlink" title="📈 总结与方法论沉淀"></a>📈 总结与方法论沉淀</h2><ol>
+<li><strong>拥抱非阻塞模型</strong>：WebFlux + Netty 架构天生具备高并发抗体。虽然大模型单次请求耗时较长（3~5秒），但由于我们在 <code>Mono.fromCallable</code> 中配合非阻塞语义，Netty 的 Worker 线程并不会被 Hang 死，极大提升了并发吞吐性能。</li>
+<li><strong>三方私有模型的适配规律</strong>：在 Spring AI 生态中，如果遇到 OpenAI 以外的第三方模型，其流式（<code>.stream()</code>）工具调用极易由于协议细微差别引发内容真空。此时果断切换到非流式同步（<code>.call()</code>）配合响应式包装，是快速上线和保住稳定性的首选。</li>
+</ol>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>spring-ai&amp;mimo模型使用&amp;Tavily搜索skill使用记录</div>
+      <div>https://swallowgo.github.io/2026/06/05/spring-ai/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>Author</div>
+          <div>QINGDONG Zeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>Posted on</div>
+          <div>June 5, 2026</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>Licensed under</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - Attribution">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/11/09/Disruptor/" title="Disruptor">
+                        <span class="hidden-mobile">Disruptor</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>Table of Contents</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">Keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>DD</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>JOJO</span></a> <br> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">Blog works best with JavaScript enabled</div>
+  </noscript>
+</body>
+</html>
