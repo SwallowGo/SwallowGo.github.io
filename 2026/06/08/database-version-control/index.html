@@ -27,7 +27,7 @@
 <meta property="og:description" content="前情提要：前司项目项目规模较小，数据库初始化不规范且不统一，存在多种流派。这里个人从个人项目到生产级项目去研究当前数据库初始化和变更的通用选择和演变历史。  一、 演进的起点：Spring Boot 原生 schema.sql 机制Spring Boot 提供了一种开箱即用的内置初始化机制，主要由 spring.sql.init.* 配置项驱动。它会自动扫描类路径（Classpath）下的特定 S">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2026-06-08T09:33:59.000Z">
-<meta property="article:modified_time" content="2026-06-08T09:37:43.202Z">
+<meta property="article:modified_time" content="2026-06-08T09:40:04.689Z">
 <meta property="article:author" content="QINGDONG Zeng">
 <meta name="twitter:card" content="summary_large_image">
   
@@ -375,7 +375,7 @@
 </li>
 </ul>
 <hr>
-<h2 id="四、-总结：团队协作的铁律"><a href="#四、-总结：团队协作的铁律" class="headerlink" title="四、 总结：团队协作的铁律"></a>四、 总结：团队协作的铁律</h2><p>无论你的团队最终选用了哪种工具，为了保证生产环境的安全稳定，建议在团队内锁死以下几条红线：</p>
+<h2 id="四、-总结：团队协作的铁律"><a href="#四、-总结：团队协作的铁律" class="headerlink" title="四、 总结：团队协作的铁律"></a>四、 总结：团队协作的铁律</h2><p>无论最终选用了哪种工具，为了保证生产环境的安全稳定，建议锁死以下几条红线：</p>
 <ol>
 <li><strong>脚本一经发布，严禁物理修改</strong>：已经合并入主分支并在线上跑过的 Flyway&#x2F;Liquibase 脚本，绝对不能改动任何一个字符（因为 Checksum 校验和会崩掉）。如果有错，必须提交一个新的、更高版本号的脚本去修正。</li>
 <li><strong>生产环境绝对关闭自动 DDL</strong>：应用上线时，务必在生产环境配置 <code>spring.flyway.enabled=false</code>，将变更权限收拢到 CI&#x2F;CD 流水线或专业数据库运维平台。</li>
@@ -415,7 +415,6 @@
 <p><strong>子变更集文件 (<code>v1.0.0_init_tables.yaml</code>)</strong></p>
 <figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">databaseChangeLog:</span><br>  <span class="hljs-bullet">-</span> <span class="hljs-attr">changeSet:</span><br>      <span class="hljs-attr">id:</span> <span class="hljs-number">1</span><span class="hljs-string">-init-user</span><br>      <span class="hljs-attr">author:</span> <span class="hljs-string">java_dev</span><br>      <span class="hljs-attr">preConditions:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">onFail:</span> <span class="hljs-string">MARK_RAN</span><br>          <span class="hljs-attr">not:</span><br>            <span class="hljs-attr">tableExists:</span><br>              <span class="hljs-attr">tableName:</span> <span class="hljs-string">t_user</span><br>      <span class="hljs-attr">changes:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">createTable:</span><br>            <span class="hljs-attr">tableName:</span> <span class="hljs-string">t_user</span><br>            <span class="hljs-attr">columns:</span><br>              <span class="hljs-bullet">-</span> <span class="hljs-attr">column:</span><br>                  <span class="hljs-attr">name:</span> <span class="hljs-string">id</span><br>                  <span class="hljs-attr">type:</span> <span class="hljs-string">bigint</span><br>                  <span class="hljs-attr">autoIncrement:</span> <span class="hljs-literal">true</span><br>                  <span class="hljs-attr">constraints:</span><br>                    <span class="hljs-attr">primaryKey:</span> <span class="hljs-literal">true</span><br>                    <span class="hljs-attr">nullable:</span> <span class="hljs-literal">false</span><br>              <span class="hljs-bullet">-</span> <span class="hljs-attr">column:</span><br>                  <span class="hljs-attr">name:</span> <span class="hljs-string">username</span><br>                  <span class="hljs-attr">type:</span> <span class="hljs-string">varchar(50)</span><br>                  <span class="hljs-attr">constraints:</span><br>                    <span class="hljs-attr">nullable:</span> <span class="hljs-literal">false</span><br>      <span class="hljs-attr">rollback:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">dropTable:</span><br>            <span class="hljs-attr">tableName:</span> <span class="hljs-string">t_user</span><br><br></code></pre></td></tr></table></figure>
 
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs"><br></code></pre></td></tr></table></figure>
                 
               </div>
             
