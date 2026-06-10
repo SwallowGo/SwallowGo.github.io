@@ -1,0 +1,699 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="QINGDONG Zeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="在高性能、高并发的服务端架构中，缓存（Cache） 是提升系统吞吐量、降低响应延迟的底层核心利器。本文将从缓存的本质、演变历史、多级缓存架构、一致性解决方案，以及生产环境“三大杀手”的应对策略进行全景解析。  一、 什么是缓存？（用空间换时间）缓存是一种用于快速读取数据的高速度数据存储层。它通常用来存储那些频繁访问、计算代价高昂或不常变动的临时数据。  核心目的：避免每次都去慢速存储（如磁盘、关系">
+<meta property="og:type" content="article">
+<meta property="og:title" content="服务端缓存技术全景解析与 Java 落地实战">
+<meta property="og:url" content="https://swallowgo.github.io/2026/06/10/cache/index.html">
+<meta property="og:site_name" content="Technology After Sunset">
+<meta property="og:description" content="在高性能、高并发的服务端架构中，缓存（Cache） 是提升系统吞吐量、降低响应延迟的底层核心利器。本文将从缓存的本质、演变历史、多级缓存架构、一致性解决方案，以及生产环境“三大杀手”的应对策略进行全景解析。  一、 什么是缓存？（用空间换时间）缓存是一种用于快速读取数据的高速度数据存储层。它通常用来存储那些频繁访问、计算代价高昂或不常变动的临时数据。  核心目的：避免每次都去慢速存储（如磁盘、关系">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2026-06-10T08:44:00.000Z">
+<meta property="article:modified_time" content="2026-06-10T08:44:21.233Z">
+<meta property="article:author" content="QINGDONG Zeng">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>服务端缓存技术全景解析与 Java 落地实战 - Technology After Sunset</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"swallowgo.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>SwallowGo&#39;s Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>Home</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>Archives</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>Categories</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>Tags</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>About</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="服务端缓存技术全景解析与 Java 落地实战"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-06-10 16:44" pubdate>
+          June 10, 2026 pm
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.9k words
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          16 mins
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">服务端缓存技术全景解析与 Java 落地实战</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>在高性能、高并发的服务端架构中，<strong>缓存（Cache）</strong> 是提升系统吞吐量、降低响应延迟的底层核心利器。本文将从缓存的本质、演变历史、多级缓存架构、一致性解决方案，以及生产环境“三大杀手”的应对策略进行全景解析。</p>
+<hr>
+<h2 id="一、-什么是缓存？（用空间换时间）"><a href="#一、-什么是缓存？（用空间换时间）" class="headerlink" title="一、 什么是缓存？（用空间换时间）"></a>一、 什么是缓存？（用空间换时间）</h2><p><strong>缓存</strong>是一种用于快速读取数据的<strong>高速度数据存储层</strong>。它通常用来存储那些频繁访问、计算代价高昂或不常变动的临时数据。</p>
+<ul>
+<li><strong>核心目的</strong>：避免每次都去慢速存储（如磁盘、关系型数据库）中获取数据，或者重复进行复杂的业务计算，从而极大地提升系统的响应速度。</li>
+<li><strong>核心思想</strong>：<strong>用空间换时间</strong>。</li>
+</ul>
+<hr>
+<h2 id="二、-缓存的演变历史：硬件到软件的映射"><a href="#二、-缓存的演变历史：硬件到软件的映射" class="headerlink" title="二、 缓存的演变历史：硬件到软件的映射"></a>二、 缓存的演变历史：硬件到软件的映射</h2><p>缓存的诞生与发展，本质上是硬件和软件中“速度慢的存储介质跟不上速度快的计算单元”这一矛盾的斗争史。</p>
+<figure class="highlight clean"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs clean">[ CPU 计算单元 ] &lt;---&gt; [ 快速、昂贵的内存 (缓存) ] &lt;---&gt; [ 慢速、便宜的存储 (磁盘/数据库) ]<br><br></code></pre></td></tr></table></figure>
+
+<ol>
+<li><strong>硬件起源（CPU 缓存）</strong>：<br>早期的计算机中，CPU 运算速度飞速提升，但内存（RAM）的读写速度跟不上。为了不让 CPU 闲置，工程师在 CPU 内部引入了容量小、但速度极快的静态内存（SRAM）芯片，即 <strong>L1、L2、L3 三级缓存</strong>。</li>
+<li><strong>软件与互联网的爆发</strong>：<br>随着互联网并发量激增，服务端的 CPU 和内存很快，但底层的关系型数据库（基于磁盘 I&#x2F;O）太慢。如果每个请求都直达数据库，数据库会瞬间崩溃。</li>
+<li><strong>现代分布式缓存</strong>：<br>软件工程师借鉴了硬件缓存的思想，在服务器内存中开辟空间暂存高频数据。为了解决多机共享问题，演进出了以 <strong>Redis</strong> 为代表的分布式缓存集群。</li>
+</ol>
+<hr>
+<h2 id="三、-Java-开发者视角：本地缓存-vs-分布式缓存"><a href="#三、-Java-开发者视角：本地缓存-vs-分布式缓存" class="headerlink" title="三、 Java 开发者视角：本地缓存 vs 分布式缓存"></a>三、 Java 开发者视角：本地缓存 vs 分布式缓存</h2><p>在 Java 企业级开发中，我们通常将缓存分为两大类：</p>
+<table>
+<thead>
+<tr>
+<th>缓存类型</th>
+<th>常见技术&#x2F;工具</th>
+<th>适用场景</th>
+<th>优缺点分析</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>本地缓存 (JVM)</strong></td>
+<td>Caffeine, Guava, <code>ConcurrentHashMap</code></td>
+<td>几乎不怎么变动的全局配置、单机高频读取的临时计算结果。</td>
+<td><strong>优点：</strong> 纳米级延迟，速度极其恐怖。<br></td>
+</tr>
+</tbody></table>
+<p><br><strong>缺点：</strong> 无法跨机器共享；占用 JVM 内存，多数据容易导致 OOM；重启即丢失。 |<br>| <strong>分布式缓存</strong> | Redis, Memcached | 用户 Session、分布式锁、全局计数器、高并发业务数据。 | <strong>优点：</strong> 跨服务器共享；支持海量数据与持久化；自带丰富的数据结构。<br></p>
+<p><br><strong>缺点：</strong> 存在网络 I&#x2F;O 开销（毫秒级）；增加了系统架构的复杂度。 |</p>
+<h3 id="1-本地缓存（以-Caffeine-为例）"><a href="#1-本地缓存（以-Caffeine-为例）" class="headerlink" title="1. 本地缓存（以 Caffeine 为例）"></a>1. 本地缓存（以 Caffeine 为例）</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs java">Cache&lt;String, User&gt; userCache = Caffeine.newBuilder()<br>    .expireAfterWrite(<span class="hljs-number">10</span>, TimeUnit.MINUTES) <span class="hljs-comment">// TTL: 写入10分钟后过期</span><br>    .maximumSize(<span class="hljs-number">10_000</span>)                    <span class="hljs-comment">// 最多缓存1万条，超过后按算法淘汰</span><br>    .build();<br><br><span class="hljs-comment">// 先查缓存，缺失则查DB并回写</span><br><span class="hljs-type">User</span> <span class="hljs-variable">user</span> <span class="hljs-operator">=</span> userCache.get(userId, key -&gt; userRepository.findById(key));<br><br></code></pre></td></tr></table></figure>
+
+<h3 id="2-分布式缓存（以-Spring-Boot-Redis-注解为例）"><a href="#2-分布式缓存（以-Spring-Boot-Redis-注解为例）" class="headerlink" title="2. 分布式缓存（以 Spring Boot + Redis 注解为例）"></a>2. 分布式缓存（以 Spring Boot + Redis 注解为例）</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">// 自动拦截请求：有缓存直接返回；无缓存查DB并写入Redis</span><br><span class="hljs-meta">@Cacheable(value = &quot;users&quot;, key = &quot;#id&quot;)</span><br><span class="hljs-keyword">public</span> User <span class="hljs-title function_">getUserById</span><span class="hljs-params">(Long id)</span> &#123;<br>    <span class="hljs-keyword">return</span> userRepository.findById(id).orElse(<span class="hljs-literal">null</span>);<br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="四、-进阶：多级缓存架构（L1-L2）"><a href="#四、-进阶：多级缓存架构（L1-L2）" class="headerlink" title="四、 进阶：多级缓存架构（L1 + L2）"></a>四、 进阶：多级缓存架构（L1 + L2）</h2><h3 id="1-为什么需要多级缓存？"><a href="#1-为什么需要多级缓存？" class="headerlink" title="1. 为什么需要多级缓存？"></a>1. 为什么需要多级缓存？</h3><p>传统的 “Java -&gt; Redis -&gt; DB” 架构在应对<strong>极高并发</strong>（如大促秒杀）时会遇到两个瓶颈：</p>
+<ul>
+<li><strong>网络 I&#x2F;O 损耗</strong>：每次查 Redis 都要走网络请求，并发极高时网卡会打满。</li>
+<li><strong>热点 Key 击穿</strong>：全网流量瞬间涌向 Redis 的同一个分片，导致该 Redis 节点 CPU 飙升。</li>
+</ul>
+<p><strong>多级缓存</strong>通过 <strong>“近端优先”</strong> 原则，将最热的数据直接缓存在 Java 进程内存（L1）中，挡掉绝大多数网络请求。</p>
+<h3 id="2-读写与多机同步逻辑"><a href="#2-读写与多机同步逻辑" class="headerlink" title="2. 读写与多机同步逻辑"></a>2. 读写与多机同步逻辑</h3><ul>
+<li><strong>读流程</strong>：先读 <strong>L1 (Caffeine)</strong> $\rightarrow$ 未命中则读 <strong>L2 (Redis)</strong> $\rightarrow$ 未命中则读 <strong>DB</strong>。读取后逐级回写。</li>
+<li><strong>更新与同步</strong>：当 A 节点更新了数据，通过 <strong>Redis Pub&#x2F;Sub（发布订阅）</strong> 或 <strong>MQ</strong> 广播通知其他 Java 节点，令它们的 L1 本地缓存失效，从而保证多台机器本地缓存的最终一致性。</li>
+</ul>
+<hr>
+<h2 id="五、-核心痛点：缓存一致性解决方案"><a href="#五、-核心痛点：缓存一致性解决方案" class="headerlink" title="五、 核心痛点：缓存一致性解决方案"></a>五、 核心痛点：缓存一致性解决方案</h2><p>当数据库和缓存都需要更新时，如何防止双写不一致（脏数据）？</p>
+<h3 id="业内主流：Cache-Aside-模式（先更新数据库，再删除缓存）"><a href="#业内主流：Cache-Aside-模式（先更新数据库，再删除缓存）" class="headerlink" title="业内主流：Cache Aside 模式（先更新数据库，再删除缓存）"></a>业内主流：Cache Aside 模式（先更新数据库，再删除缓存）</h3><ol>
+<li><strong>写请求</strong>：先更新数据库，成功后再将对应的缓存<strong>删除</strong>（不是更新）。</li>
+<li><strong>读请求</strong>：并发读取时若缓存缺失，读 DB 并回写。</li>
+</ol>
+<h4 id="💡-进阶保障：Binlog-异步双删（解决极端情况下的删除失败）"><a href="#💡-进阶保障：Binlog-异步双删（解决极端情况下的删除失败）" class="headerlink" title="💡 进阶保障：Binlog 异步双删（解决极端情况下的删除失败）"></a>💡 进阶保障：Binlog 异步双删（解决极端情况下的删除失败）</h4><p>如果第二步删除缓存由于网络抖动失败了，可以利用 <strong>Canal</strong> 工具伪装成 MySQL Slave，<strong>订阅 MySQL 的 Binlog 变更日志</strong>。一旦有数据修改，Canal 解析并将消息发送至 MQ，由专门的消费服务利用 MQ 的重试机制<strong>确保缓存最终被删除</strong>。</p>
+<hr>
+<h2 id="六、-生产环境“三大杀手”应对策略"><a href="#六、-生产环境“三大杀手”应对策略" class="headerlink" title="六、 生产环境“三大杀手”应对策略"></a>六、 生产环境“三大杀手”应对策略</h2><p>在生产环境中，缓存系统的稳定性直接决定了数据库的生死。以下是三大核心问题的工业级解决方案：</p>
+<h3 id="1-缓存雪崩-Cache-Avalanche"><a href="#1-缓存雪崩-Cache-Avalanche" class="headerlink" title="1. 缓存雪崩 (Cache Avalanche)"></a>1. 缓存雪崩 (Cache Avalanche)</h3><ul>
+<li><strong>现象</strong>：大批量的 Key 在<strong>同一时间大面积过期</strong>，或者缓存服务器宕机，导致海量请求直扑数据库，打死 DB。</li>
+<li><strong>解决策略</strong>：</li>
+<li><strong>TTL 随机扰动</strong>：设置过期时间时，加上一个随机波动值（如 1~5 分钟），防止集中过期。</li>
+<li><strong>熔断限流</strong>：使用 Sentinel &#x2F; Resilience4j 限制进入 DB 的流量。</li>
+</ul>
+<h3 id="2-缓存击穿-Cache-Breakdown"><a href="#2-缓存击穿-Cache-Breakdown" class="headerlink" title="2. 缓存击穿 (Cache Breakdown)"></a>2. 缓存击穿 (Cache Breakdown)</h3><ul>
+<li><strong>现象</strong>：某一个<strong>超级热点 Key</strong>（如爆款商品）在承载极高并发的同时<strong>突然过期</strong>，瞬间大批线程同时涌入 DB。</li>
+<li><strong>解决策略</strong>：</li>
+<li><strong>分布式锁（Redisson Lock）</strong>：查 DB 前加锁，只允许一个线程去捞数据回写，其余线程等待重试。加锁后务必进行<strong>双重检查（Double-Check）</strong>。</li>
+<li><strong>逻辑过期 &#x2F; 永不过期</strong>：Redis 层面不设 TTL，在数据内部封装过期时间。发现逻辑过期后，返回旧数据，并异步启动后台线程更新 DB 和缓存。</li>
+</ul>
+<h3 id="3-缓存穿透-Cache-Penetration"><a href="#3-缓存穿透-Cache-Penetration" class="headerlink" title="3. 缓存穿透 (Cache Penetration)"></a>3. 缓存穿透 (Cache Penetration)</h3><ul>
+<li><strong>现象</strong>：黑客或异常流量疯狂请求<strong>既不存在于缓存、也不存在于数据库</strong>的数据（如 <code>id = -9999</code>），导致每一笔流量都直达 DB。</li>
+<li><strong>解决策略</strong>：</li>
+<li><strong>缓存空对象</strong>：查不到也往 Redis 存一个 <code>null</code>，设置极短过期时间。缺点是浪费 Redis 内存。</li>
+<li><strong>布隆过滤器 (Bloom Filter)</strong>：终极武器。利用高效的位数组和哈希算法，在流量进入缓存前进行拦截。若布隆过滤器判断数据“绝对不存在”，直接在外层拦截返回。</li>
+</ul>
+<hr>
+<h2 id="🏁-总结：高并发缓存设计的“金字塔防线”"><a href="#🏁-总结：高并发缓存设计的“金字塔防线”" class="headerlink" title="🏁 总结：高并发缓存设计的“金字塔防线”"></a>🏁 总结：高并发缓存设计的“金字塔防线”</h2><p>一个高可用的缓存系统，应该在架构上形成多层立体防护：</p>
+<ol>
+<li><strong>网关层</strong>：限流降级，拦截恶意刷接口流量。</li>
+<li><strong>进程层（L1）</strong>：Caffeine 本地缓存，拦截 90% 以上重复的网络 I&#x2F;O。</li>
+<li><strong>过滤层</strong>：布隆过滤器，秒杀所有不存在的穿透性长尾请求。</li>
+<li><strong>分布式层（L2）</strong>：Redis 集群，通过加盐 TTL 防雪崩，通过分布式锁防击穿。</li>
+<li><strong>存储层（DB）</strong>：合理的连接池与读写分离，作为最后的底线。</li>
+</ol>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>服务端缓存技术全景解析与 Java 落地实战</div>
+      <div>https://swallowgo.github.io/2026/06/10/cache/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>Author</div>
+          <div>QINGDONG Zeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>Posted on</div>
+          <div>June 10, 2026</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>Licensed under</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - Attribution">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/06/10/redis1/" title="🚀 Redis 核心技术与生产级运维学习总结">
+                        <span class="hidden-mobile">🚀 Redis 核心技术与生产级运维学习总结</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>Table of Contents</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">Keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>DD</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>JOJO</span></a> <br> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">Blog works best with JavaScript enabled</div>
+  </noscript>
+</body>
+</html>
