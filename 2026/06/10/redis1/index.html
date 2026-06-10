@@ -1,0 +1,732 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="QINGDONG Zeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="一、 为什么 Redis 这么快？Redis 官方数据显示其读写性能可以达到 10 万+ QPS，这主要得益于以下四个核心设计：  纯内存操作 (Memory-Based)   数据全部存储在内存中，CPU 读写内存的速度远超磁盘 I&#x2F;O（纳秒级 vs 微秒&#x2F;毫秒级）。   非阻塞的单线程模型 (Single-Threaded)   核心的网络 I&#x2F;O 和键值读写由单">
+<meta property="og:type" content="article">
+<meta property="og:title" content="🚀 Redis 核心技术与生产级运维学习总结">
+<meta property="og:url" content="https://swallowgo.github.io/2026/06/10/redis1/index.html">
+<meta property="og:site_name" content="Technology After Sunset">
+<meta property="og:description" content="一、 为什么 Redis 这么快？Redis 官方数据显示其读写性能可以达到 10 万+ QPS，这主要得益于以下四个核心设计：  纯内存操作 (Memory-Based)   数据全部存储在内存中，CPU 读写内存的速度远超磁盘 I&#x2F;O（纳秒级 vs 微秒&#x2F;毫秒级）。   非阻塞的单线程模型 (Single-Threaded)   核心的网络 I&#x2F;O 和键值读写由单">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2026-06-10T06:41:49.000Z">
+<meta property="article:modified_time" content="2026-06-10T06:42:57.528Z">
+<meta property="article:author" content="QINGDONG Zeng">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>🚀 Redis 核心技术与生产级运维学习总结 - Technology After Sunset</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"swallowgo.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>SwallowGo&#39;s Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>Home</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>Archives</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>Categories</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>Tags</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>About</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="🚀 Redis 核心技术与生产级运维学习总结"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-06-10 14:41" pubdate>
+          June 10, 2026 pm
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.8k words
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          16 mins
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">🚀 Redis 核心技术与生产级运维学习总结</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id=""><a href="#" class="headerlink" title=""></a></h1><h2 id="一、-为什么-Redis-这么快？"><a href="#一、-为什么-Redis-这么快？" class="headerlink" title="一、 为什么 Redis 这么快？"></a>一、 为什么 Redis 这么快？</h2><p>Redis 官方数据显示其读写性能可以达到 10 万+ QPS，这主要得益于以下四个核心设计：</p>
+<ol>
+<li><strong>纯内存操作 (Memory-Based)</strong></li>
+</ol>
+<ul>
+<li>数据全部存储在内存中，CPU 读写内存的速度远超磁盘 I&#x2F;O（纳秒级 vs 微秒&#x2F;毫秒级）。</li>
+</ul>
+<ol start="2">
+<li><strong>非阻塞的单线程模型 (Single-Threaded)</strong></li>
+</ol>
+<ul>
+<li>核心的网络 I&#x2F;O 和键值读写由单个主线程完成。</li>
+<li><strong>优势</strong>：避免了频繁的 CPU 上下文切换开销，同时免去了多线程死锁、加锁及锁竞争的性能损耗。</li>
+<li><em>注：Redis 4.0+ 引入异步线程处理大 Key 删除；Redis 6.0+ 引入多线程处理网络 I&#x2F;O，但核心命令执行仍为单线程。</em></li>
+</ul>
+<ol start="3">
+<li><strong>I&#x2F;O 多路复用模型 (I&#x2F;O Multiplexing)</strong></li>
+</ol>
+<ul>
+<li>基于 Linux 的 <code>epoll</code> 机制，允许单个主线程同时监听成千上万个网络连接（Socket）。一旦有请求就绪，操作系统会通知 Redis 快速处理，实现高并发连接。</li>
+</ul>
+<ol start="4">
+<li><strong>极致优化的底层数据结构</strong></li>
+</ol>
+<ul>
+<li><strong>String</strong>：采用 <strong>SDS（简单动态字符串）</strong>，获取长度时间复杂度为 $O(1)$，支持动态扩容。</li>
+<li><strong>Hash&#x2F;List&#x2F;Set&#x2F;ZSet</strong>：内部根据数据量大小动态转换编码。例如 <code>ZSet</code> 在数据量大时使用 <strong><code>SkipList</code>（跳表）</strong>，保证 $O(\log N)$ 的高效查找。</li>
+</ul>
+<hr>
+<h2 id="二、-Redis-的定位与-5-大应用场景"><a href="#二、-Redis-的定位与-5-大应用场景" class="headerlink" title="二、 Redis 的定位与 5 大应用场景"></a>二、 Redis 的定位与 5 大应用场景</h2><h3 id="1-定位"><a href="#1-定位" class="headerlink" title="1. 定位"></a>1. 定位</h3><p>Redis 是一个<strong>基于内存</strong>的、支持<strong>日志持久化</strong>的、高性能<strong>键值对（Key-Value）存储系统</strong>与内存数据库。</p>
+<h3 id="2-经典使用场景"><a href="#2-经典使用场景" class="headerlink" title="2. 经典使用场景"></a>2. 经典使用场景</h3><ul>
+<li>🏎️ <strong>高速缓存（Cache）</strong>：存储热点数据（商品详情、用户信息、Token 令牌），大幅减轻传统关系型数据库（如 MySQL）的读压力。</li>
+<li>🔒 <strong>分布式锁（Distributed Lock）</strong>：利用 <code>SETNX</code> 或 Redisson 组件，在微服务架构下确保全局业务互斥（如防止秒杀超卖）。</li>
+<li>📊 <strong>计数器与排行榜</strong>：利用 <code>INCRBY</code> 实现高并发点赞&#x2F;库存扣减；利用 <code>ZSet</code> 实现实时热搜榜、积分排行榜。</li>
+<li>✉️ <strong>轻量级消息队列</strong>：利用 List 的 <code>LPUSH</code> + <code>BRPOP</code>，或 Redis 5.0+ 的 <code>Stream</code> 结构（支持消费组和消息 ACK）实现异步解耦。</li>
+<li>🔑 <strong>会话保持（Session Store）</strong>：集中管理多台应用服务器的 Session 会话状态。</li>
+</ul>
+<hr>
+<h2 id="三、-Redis-四种部署架构及选型策略"><a href="#三、-Redis-四种部署架构及选型策略" class="headerlink" title="三、 Redis 四种部署架构及选型策略"></a>三、 Redis 四种部署架构及选型策略</h2><h3 id="1-部署架构对比"><a href="#1-部署架构对比" class="headerlink" title="1. 部署架构对比"></a>1. 部署架构对比</h3><table>
+<thead>
+<tr>
+<th>部署方式</th>
+<th>架构特点</th>
+<th>优缺点</th>
+<th>适合场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>单机模式 (Standalone)</strong></td>
+<td>单一实例负责全部读写。</td>
+<td>部署最简单；但存在单点故障（SPOF），受单机内存限制。</td>
+<td>开发测试环境、非核心内部工具。</td>
+</tr>
+<tr>
+<td><strong>主从复制 (Master-Slave)</strong></td>
+<td>主节点（Master）写，从节点（Slave）读，异步同步。</td>
+<td>实现了<strong>读写分离</strong>，提升读并发；但<strong>不具备自动故障转移</strong>能力。</td>
+<td>读多写少，能容忍一定人工恢复时间的场景。</td>
+</tr>
+<tr>
+<td><strong>哨兵模式 (Sentinel)</strong></td>
+<td>主从基础上引入哨兵集群，监控并自动故障转移。</td>
+<td><strong>高可用</strong>，自动选举新主并通知客户端；但写性能仍受单机 Master 限制。</td>
+<td>数据量百 GB 以内，对<strong>高可用（HA）要求极高</strong>的核心业务。</td>
+</tr>
+<tr>
+<td><strong>切片集群 (Redis Cluster)</strong></td>
+<td>16384 个哈希槽分布式存储，去中心化。</td>
+<td><strong>横向扩展</strong>，解决单机内存和写性能瓶颈；但不支持跨节点批量操作。</td>
+<td><strong>海量数据（数百 GB 以上）<strong>或</strong>超高写并发</strong>的巨型互联网应用。</td>
+</tr>
+</tbody></table>
+<h3 id="2-选型三步决策法"><a href="#2-选型三步决策法" class="headerlink" title="2. 选型三步决策法"></a>2. 选型三步决策法</h3><ol>
+<li><strong>环境维度</strong>：非生产环境&#x2F;开发测试 $\rightarrow$ 优先选择 <strong>单机模式</strong>。</li>
+<li><strong>可用性维度</strong>：生产环境必须高可用 $\rightarrow$ 排除单机与纯主从，进入哨兵与集群的二选一。</li>
+<li><strong>容量与并发维度</strong>：</li>
+</ol>
+<ul>
+<li>数据量 $&lt; 100\text{GB}$ 且写 QPS 较低 $\rightarrow$ 选择 <strong>哨兵模式</strong>（维护成本低，兼容性好）。</li>
+<li>数据量 $\ge$ 数百 GB 或写并发遭遇单机瓶颈 $\rightarrow$ 必须选择 <strong>切片集群模式 (Redis Cluster)</strong>。</li>
+</ul>
+<hr>
+<h2 id="四、-生产级故障应对预案"><a href="#四、-生产级故障应对预案" class="headerlink" title="四、 生产级故障应对预案"></a>四、 生产级故障应对预案</h2><h3 id="1-单机-主从模式"><a href="#1-单机-主从模式" class="headerlink" title="1. 单机&#x2F;主从模式"></a>1. 单机&#x2F;主从模式</h3><ul>
+<li><strong>故障</strong>：进程崩溃或 Master 宕机导致无法写入。</li>
+<li><strong>预案</strong>：</li>
+<li>使用 <code>Systemd</code> 或 <code>Supervisor</code> 配置进程挂掉自动拉起。</li>
+<li>必须开启 RDB+AOF，每天定时冷备 RDB 文件至异地。</li>
+<li>主从模式下需人工介入，对从节点执行 <code>SLAVEOF NO ONE</code> 升主，并修改其他从节点指向。业务层需配合限流&#x2F;降级以防拖垮数据库。</li>
+</ul>
+<h3 id="2-哨兵模式（自动自愈）"><a href="#2-哨兵模式（自动自愈）" class="headerlink" title="2. 哨兵模式（自动自愈）"></a>2. 哨兵模式（自动自愈）</h3><ul>
+<li><strong>流程</strong>：主观下线 $\rightarrow$ 客观下线 $\rightarrow$ 哨兵集群选举 Leader $\rightarrow$ 挑选最优 Slave 自动升主 $\rightarrow$ 通知客户端。</li>
+<li><strong>规避脑裂（Split-Brain）</strong>：防止网络分区时出现双 Master 导致数据错乱，必须在 <code>redis.conf</code> 配置：</li>
+</ul>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs text">min-slaves-to-write 1     # 至少有 1 个从节点在同步<br>min-slaves-max-lag 10     # 复制延迟不能超过 10 秒<br><br></code></pre></td></tr></table></figure>
+
+
+
+<h3 id="3-切片集群模式"><a href="#3-切片集群模式" class="headerlink" title="3. 切片集群模式"></a>3. 切片集群模式</h3><ul>
+<li><strong>流程</strong>：Master 挂掉后，其他 Master 节点通过 Gossip 协议感知并判定 <code>FAIL</code>，该分片的 Slave 自动发起选举并接管对应的哈希槽（Slots）。</li>
+<li><strong>大面积崩溃预案</strong>：若某一分片的主从全挂，默认会导致整个集群不可用。建议修改配置：</li>
+</ul>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs text">cluster-require-full-coverage no  # 允许部分分片损坏时，其余分片继续提供服务<br><br></code></pre></td></tr></table></figure>
+
+
+<ul>
+<li><strong>部署黄金法则</strong>：务必开启<strong>反亲和性（Anti-Affinity）部署</strong>，确保同一分片的 Master 和 Slave 绝对不在同一台物理机或同一个机架上。</li>
+</ul>
+<hr>
+<h2 id="五、-生产环境扩容与平滑迁移方案"><a href="#五、-生产环境扩容与平滑迁移方案" class="headerlink" title="五、 生产环境扩容与平滑迁移方案"></a>五、 生产环境扩容与平滑迁移方案</h2><h3 id="1-扩容-迁移三种可行方案"><a href="#1-扩容-迁移三种可行方案" class="headerlink" title="1. 扩容&#x2F;迁移三种可行方案"></a>1. 扩容&#x2F;迁移三种可行方案</h3><ul>
+<li><strong>方案 A（集群内在线扩容）</strong>：Redis Cluster 架构下，通过 <code>redis-cli --cluster add-node</code> 加入新节点，再使用 <code>reshard</code> 命令<strong>在线迁移哈希槽</strong>。业务基于 <code>ASK/MOVED</code> 重定向机制，实现<strong>完全不停机</strong>。</li>
+<li><strong>方案 B（跨架构平滑迁移）</strong>：单机&#x2F;哨兵迁移到集群，或跨机房迁移。使用开源工具 <strong>RedisShake</strong>，配置 <code>sync</code> 模式。先通过 <code>PSYNC</code> 解析 RDB 进行<strong>全量同步</strong>，再持续监听 Oplog 进行<strong>增量同步</strong>。当延迟接近 0 毫秒时，业务端切换连接配置并重启，实现平滑割接。</li>
+<li><strong>方案 C（紧急垂直扩容）</strong>：遭遇内存告警时的权宜之计。采用“滚轴式重启”：先调大 Slave 内存并重启 $\rightarrow$ 哨兵手动 Failover 提升 Slave 为新主 $\rightarrow$ 停机调大旧主内存 $\rightarrow$ 重启作为 Slave 重新加入。</li>
+</ul>
+<h3 id="2-核心考虑点与避坑指南"><a href="#2-核心考虑点与避坑指南" class="headerlink" title="2. 核心考虑点与避坑指南"></a>2. 核心考虑点与避坑指南</h3><ul>
+<li><strong>⚠️ 大 Key（BigKey）阻塞</strong>：迁移单个 Key 时底层是阻塞式的（<code>DUMP</code> + <code>RESTORE</code>）。迁移前必须使用 <code>redis-cli --bigkeys</code> 排查，<strong>严禁在高峰期迁移包含数万个元素的 BigKey</strong>，否则会导致主线程卡死。</li>
+<li><strong>📈 复制缓冲区爆掉</strong>：如果源端写并发极高，全量同步时间长，会导致写命令覆盖掉 <strong><code>repl-backlog-buffer</code></strong>，从而引发无限循环全量同步。迁移前必须临时调大该缓冲区（如改至 512MB 或 1GB）。</li>
+<li><strong>💻 客户端兼容性（Cluster 限制）</strong>：从单机&#x2F;哨兵迁移到 Redis Cluster 后，代码中的批量操作（如 <code>MGET/MSET/Pipeline</code>）及 Lua 脚本中的所有 Key <strong>必须位于同一个哈希槽（Slot）内</strong>，否则报错。必要时需在业务层引入 <strong>Hash Tag</strong>（如 <code>&#123;user:123&#125;:info</code>）进行重构。</li>
+<li><strong>📊 内存安全线</strong>：显式设置 <code>maxmemory</code>。若开启 RDB 快照，Copy-On-Write 机制会消耗额外物理内存，建议 Redis 的 <code>maxmemory</code> 设置为<strong>机器物理内存的 70% ~ 80%</strong>。</li>
+</ul>
+<hr>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>🚀 Redis 核心技术与生产级运维学习总结</div>
+      <div>https://swallowgo.github.io/2026/06/10/redis1/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>Author</div>
+          <div>QINGDONG Zeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>Posted on</div>
+          <div>June 10, 2026</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>Licensed under</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - Attribution">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/06/10/MYSQL1/" title="MYSQL索引原理和SQL优化手册">
+                        <span class="hidden-mobile">MYSQL索引原理和SQL优化手册</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>Table of Contents</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">Keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>DD</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>JOJO</span></a> <br> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">Blog works best with JavaScript enabled</div>
+  </noscript>
+</body>
+</html>
