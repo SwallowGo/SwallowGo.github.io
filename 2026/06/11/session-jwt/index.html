@@ -1,0 +1,707 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="QINGDONG Zeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="一、 演变脉络：四代登录状态管理的进化在深入代码之前，我们先通过一张对比表来看看登录状态记录是如何一步步演进的：    发展阶段 技术方案 状态存储位置 核心痛点 适用场景    1. 早期阶段 纯 Cookie 记录 客户端浏览器 极其不安全，数据易被篡改 已被淘汰   2. 单体时代 原生 HttpSession 服务器内存 (Tomcat) 无法横向扩展（集群下无法共享） 小型单体项目">
+<meta property="og:type" content="article">
+<meta property="og:title" content="🛠️ 从 Cookie 到双 Token：Web 登录状态管理演变史与 Java 落地实战">
+<meta property="og:url" content="https://swallowgo.github.io/2026/06/11/session-jwt/index.html">
+<meta property="og:site_name" content="Technology After Sunset">
+<meta property="og:description" content="一、 演变脉络：四代登录状态管理的进化在深入代码之前，我们先通过一张对比表来看看登录状态记录是如何一步步演进的：    发展阶段 技术方案 状态存储位置 核心痛点 适用场景    1. 早期阶段 纯 Cookie 记录 客户端浏览器 极其不安全，数据易被篡改 已被淘汰   2. 单体时代 原生 HttpSession 服务器内存 (Tomcat) 无法横向扩展（集群下无法共享） 小型单体项目">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2026-06-11T09:55:24.000Z">
+<meta property="article:modified_time" content="2026-06-11T09:56:11.268Z">
+<meta property="article:author" content="QINGDONG Zeng">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>🛠️ 从 Cookie 到双 Token：Web 登录状态管理演变史与 Java 落地实战 - Technology After Sunset</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"swallowgo.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>SwallowGo&#39;s Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>Home</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>Archives</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>Categories</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>Tags</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>About</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="🛠️ 从 Cookie 到双 Token：Web 登录状态管理演变史与 Java 落地实战"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-06-11 17:55" pubdate>
+          June 11, 2026 pm
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.9k words
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          16 mins
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">🛠️ 从 Cookie 到双 Token：Web 登录状态管理演变史与 Java 落地实战</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <hr>
+<h2 id="一、-演变脉络：四代登录状态管理的进化"><a href="#一、-演变脉络：四代登录状态管理的进化" class="headerlink" title="一、 演变脉络：四代登录状态管理的进化"></a>一、 演变脉络：四代登录状态管理的进化</h2><p>在深入代码之前，我们先通过一张对比表来看看登录状态记录是如何一步步演进的：</p>
+<table>
+<thead>
+<tr>
+<th>发展阶段</th>
+<th>技术方案</th>
+<th>状态存储位置</th>
+<th>核心痛点</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>1. 早期阶段</strong></td>
+<td>纯 Cookie 记录</td>
+<td>客户端浏览器</td>
+<td>极其不安全，数据易被篡改</td>
+<td>已被淘汰</td>
+</tr>
+<tr>
+<td><strong>2. 单体时代</strong></td>
+<td>原生 <code>HttpSession</code></td>
+<td>服务器内存 (Tomcat)</td>
+<td>无法横向扩展（集群下无法共享）</td>
+<td>小型单体项目</td>
+</tr>
+<tr>
+<td><strong>3. 分布式单体</strong></td>
+<td><code>Spring Session Redis</code></td>
+<td>远程分布式缓存 (Redis)</td>
+<td>依赖外部存储，有一定的内存开销</td>
+<td>中大型单体、对状态强控要求高的系统</td>
+</tr>
+<tr>
+<td><strong>4. 前后端分离&#x2F;微服务</strong></td>
+<td>无状态 Token (JWT &#x2F; 双 Token)</td>
+<td>客户端 (服务器无状态)</td>
+<td>覆水难收（注销难、强控难）</td>
+<td>现代微服务架构、跨端 App、SPA 应用</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="二、-单体架构标准：基于-Session-的状态管理"><a href="#二、-单体架构标准：基于-Session-的状态管理" class="headerlink" title="二、 单体架构标准：基于 Session 的状态管理"></a>二、 单体架构标准：基于 Session 的状态管理</h2><p>在传统的单体架构中，基于 Session 的状态管理是主流。Spring Web（Spring MVC）对底层的 Servlet API 进行了高级封装，使得开发人员能够以更优雅的方式来管理用户状态。</p>
+<h3 id="1-底层实现原理"><a href="#1-底层实现原理" class="headerlink" title="1. 底层实现原理"></a>1. 底层实现原理</h3><p>Tomcat 收到请求后，会解析 HTTP 请求头中的 Cookie，寻找名为 <code>JSESSIONID</code> 的值。</p>
+<ul>
+<li>如果找到，则匹配内存中的 <code>HttpSession</code> 对象。</li>
+<li>如果未找到，首次调用时会创建新 Session，并在响应头中自动添加 <code>Set-Cookie: JSESSIONID=xxxxxx; Path=/; HttpOnly</code> 返回给浏览器。</li>
+</ul>
+<h3 id="2-Spring-Web-中的日常开发使用"><a href="#2-Spring-Web-中的日常开发使用" class="headerlink" title="2. Spring Web 中的日常开发使用"></a>2. Spring Web 中的日常开发使用</h3><p>在 Spring Boot 项目中，开发人员通常有以下 4 种做法来使用 Session：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@RestController</span><br><span class="hljs-meta">@RequestMapping(&quot;/user&quot;)</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">UserController</span> &#123;<br><br>    <span class="hljs-comment">// 1. 方法参数隐式注入：用于登录时写入状态</span><br>    <span class="hljs-meta">@PostMapping(&quot;/login&quot;)</span><br>    <span class="hljs-keyword">public</span> String <span class="hljs-title function_">login</span><span class="hljs-params">(<span class="hljs-meta">@RequestBody</span> LoginRequest request, HttpSession session)</span> &#123;<br>        <span class="hljs-type">User</span> <span class="hljs-variable">user</span> <span class="hljs-operator">=</span> userService.login(request.getUsername(), request.getPassword());<br>        <span class="hljs-keyword">if</span> (user != <span class="hljs-literal">null</span>) &#123;<br>            session.setAttribute(<span class="hljs-string">&quot;currentUser&quot;</span>, user); <span class="hljs-comment">// 数据存入当前 Session</span><br>            <span class="hljs-keyword">return</span> <span class="hljs-string">&quot;登录成功&quot;</span>;<br>        &#125;<br>        <span class="hljs-keyword">return</span> <span class="hljs-string">&quot;账号或密码错误&quot;</span>;<br>    &#125;<br><br>    <span class="hljs-comment">// 2. 使用 @SessionAttribute 注解：优雅地读取状态</span><br>    <span class="hljs-meta">@GetMapping(&quot;/profile&quot;)</span><br>    <span class="hljs-keyword">public</span> ResponseEntity&lt;User&gt; <span class="hljs-title function_">getProfile</span><span class="hljs-params">(<span class="hljs-meta">@SessionAttribute(&quot;currentUser&quot;)</span> User user)</span> &#123;<br>        <span class="hljs-comment">// Spring 自动去 Session 中找名为 &quot;currentUser&quot; 的属性并转型，无需手动 getAttribute</span><br>        <span class="hljs-keyword">return</span> ResponseEntity.ok(user);<br>    &#125;<br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<p>此外，还可以通过 <code>@SessionScope</code> 声明一个会话周期的 Bean（如购物车）。为了防范重复代码，通常会编写一个 <code>HandlerInterceptor</code>（拦截器）进行统一的登录鉴权。</p>
+<h3 id="3-集群痛点与-Spring-Session-Redis-的引入"><a href="#3-集群痛点与-Spring-Session-Redis-的引入" class="headerlink" title="3. 集群痛点与 Spring Session Redis 的引入"></a>3. 集群痛点与 Spring Session Redis 的引入</h3><p>单体 Session 最大的痛点是“服务重启或集群部署时状态丢失”。为了解决这个问题，开发人员通常会引入 <strong>Spring Session Redis</strong>。</p>
+<p>它的引入极其简单，具备<strong>零侵入性</strong>：</p>
+<ol>
+<li><strong>加依赖</strong>：引入 <code>spring-session-data-redis</code> 和 <code>spring-boot-starter-data-redis</code>。</li>
+<li><strong>改配置</strong>：在 <code>application.yml</code> 中指定 <code>spring.session.store-type: redis</code>。</li>
+<li><strong>避坑指南</strong>：存入 Session 的对象必须实现 <code>Serializable</code> 接口；同时建议配置 <code>GenericJackson2JsonRedisSerializer</code> 替换默认的 JDK 序列化，防止 Redis 中出现二进制乱码。</li>
+</ol>
+<hr>
+<h2 id="三、-微服务时代：基于-JWT-的无状态认证"><a href="#三、-微服务时代：基于-JWT-的无状态认证" class="headerlink" title="三、 微服务时代：基于 JWT 的无状态认证"></a>三、 微服务时代：基于 JWT 的无状态认证</h2><p>随着微服务架构的流行，为了追求完全的无状态（Stateless）和高扩展性，<strong>JWT（JSON Web Token）</strong> 逐渐取代了 Session。</p>
+<h3 id="1-JWT-的底层原理"><a href="#1-JWT-的底层原理" class="headerlink" title="1. JWT 的底层原理"></a>1. JWT 的底层原理</h3><p>JWT 是一个由小数点拼接的字符串：<code>Header.Payload.Signature</code>。</p>
+<ul>
+<li><strong>Header（头部）</strong>：声明令牌类型和签名算法（如 HS256）。</li>
+<li><strong>Payload（负载）</strong>：存放业务数据（如 userId、角色），<strong>它是可逆编码的，切记不要存放密码等敏感隐私信息</strong>。</li>
+<li><strong>Signature（签名）</strong>：防篡改的核心。利用服务器私钥对前两部分进行哈希加盐：</li>
+</ul>
+<p>$$Signature &#x3D; HMACSHA256(Base64(Header) + “.” + Base64(Payload), secretKey)$$</p>
+<h3 id="2-Java-生态主流选型与最新代码实践"><a href="#2-Java-生态主流选型与最新代码实践" class="headerlink" title="2. Java 生态主流选型与最新代码实践"></a>2. Java 生态主流选型与最新代码实践</h3><p>目前 Java 领域最主流的 JWT 库是 <strong>JJWT (io.jsonwebtoken)</strong>。在最新的 0.12.x 版本中，JJWT 全面重构了其流式 API。以下是工业级的工具类实现：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">import</span> io.jsonwebtoken.Claims;<br><span class="hljs-keyword">import</span> io.jsonwebtoken.JwtException;<br><span class="hljs-keyword">import</span> io.jsonwebtoken.Jwts;<br><span class="hljs-keyword">import</span> io.jsonwebtoken.security.Keys;<br><span class="hljs-keyword">import</span> javax.crypto.SecretKey;<br><span class="hljs-keyword">import</span> java.util.Date;<br><span class="hljs-keyword">import</span> java.util.Map;<br><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">JwtUtils</span> &#123;<br>    <span class="hljs-comment">// 生产环境应从配置文件读取，长度至少为 32 字节</span><br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-type">String</span> <span class="hljs-variable">SECRET_STR</span> <span class="hljs-operator">=</span> <span class="hljs-string">&quot;your-super-secret-key-32-bytes-length!!!&quot;</span>;<br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-type">SecretKey</span> <span class="hljs-variable">KEY</span> <span class="hljs-operator">=</span> Keys.hmacShaKeyFor(SECRET_STR.getBytes());<br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-type">long</span> <span class="hljs-variable">EXPIRATION_TIME</span> <span class="hljs-operator">=</span> <span class="hljs-number">60</span> * <span class="hljs-number">60</span> * <span class="hljs-number">1000</span>; <span class="hljs-comment">// 1小时</span><br><br>    <span class="hljs-comment">// 生成 Token</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> String <span class="hljs-title function_">createToken</span><span class="hljs-params">(Long userId, Map&lt;String, Object&gt; claims)</span> &#123;<br>        <span class="hljs-keyword">return</span> Jwts.builder()<br>                .header().add(<span class="hljs-string">&quot;typ&quot;</span>, <span class="hljs-string">&quot;JWT&quot;</span>).and()<br>                .subject(String.valueOf(userId))   <span class="hljs-comment">// 标准属性 sub</span><br>                .claims(claims)                    <span class="hljs-comment">// 自定义 Payload</span><br>                .issuedAt(<span class="hljs-keyword">new</span> <span class="hljs-title class_">Date</span>())<br>                .expiration(<span class="hljs-keyword">new</span> <span class="hljs-title class_">Date</span>(System.currentTimeMillis() + EXPIRATION_TIME))<br>                .signWith(KEY)                     <span class="hljs-comment">// 签名</span><br>                .compact();<br>    &#125;<br><br>    <span class="hljs-comment">// 解析并验证 Token（防篡改与过期校验）</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> Claims <span class="hljs-title function_">parseToken</span><span class="hljs-params">(String token)</span> &#123;<br>        <span class="hljs-keyword">try</span> &#123;<br>            <span class="hljs-keyword">return</span> Jwts.parser()<br>                    .verifyWith(KEY) <span class="hljs-comment">// 注入密钥验签</span><br>                    .build()<br>                    .parseSignedClaims(token) <span class="hljs-comment">// 验签失败或过期会直接抛出异常</span><br>                    .getPayload();<br>        &#125; <span class="hljs-keyword">catch</span> (JwtException e) &#123;<br>            <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">RuntimeException</span>(<span class="hljs-string">&quot;Token 验证失败: &quot;</span> + e.getMessage());<br>        &#125;<br>    &#125;<br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<p>在架构落地时，如果是纯单体项目，通常由业务服务的 Spring 拦截器解析 JWT；如果是微服务架构，JWT 的解析和验签统一在 <strong>Spring Cloud Gateway（网关层）</strong> 完成，网关通过后再将 <code>userId</code> 以明文 Header 的形式透传给下游各个微服务。</p>
+<hr>
+<h2 id="四、-完美折中：工业级双-Token-机制"><a href="#四、-完美折中：工业级双-Token-机制" class="headerlink" title="四、 完美折中：工业级双 Token 机制"></a>四、 完美折中：工业级双 Token 机制</h2><p>尽管 JWT 很轻量，但它有一个致命缺陷：<strong>覆水难收（注销难）</strong>。Token 一旦发放出去，在到期前永远有效，服务器无法主动将其废弃。为了平衡“安全性”与“用户体验”，<strong>双 Token 机制</strong>应运而生。</p>
+<h3 id="1-角色分工与无感刷新"><a href="#1-角色分工与无感刷新" class="headerlink" title="1. 角色分工与无感刷新"></a>1. 角色分工与无感刷新</h3><p>双 Token 引入了两个令牌：</p>
+<ul>
+<li><strong>Access Token</strong>：用于业务鉴权。寿命极短（如 15 分钟），高频传输。</li>
+<li><strong>Refresh Token</strong>：用于续期。寿命较长（如 7 天），只在 Access Token 过期时，由前端（如 Axios 响应拦截器）在后台秘密调用续期接口，用它换取新的 Access Token。整个过程<strong>用户完全无感知</strong>。</li>
+</ul>
+<h3 id="2-极致防线：Refresh-Token-轮转与“自爆机制”"><a href="#2-极致防线：Refresh-Token-轮转与“自爆机制”" class="headerlink" title="2. 极致防线：Refresh Token 轮转与“自爆机制”"></a>2. 极致防线：Refresh Token 轮转与“自爆机制”</h3><p>如果黑客连<strong>从未被使用过</strong>的 Refresh Token 也窃取了，并且抢在正牌用户之前进行了刷新，该怎么办？</p>
+<p>业界通过 <strong>Refresh Token Rotation（轮转机制）</strong> 配合 Redis 构建了完美的自爆防线：</p>
+<ol>
+<li><strong>状态记录</strong>：虽然 JWT 是无状态的，但为了强控，后端会将 Refresh Token 记录在 Redis 中，并维护其状态（<code>unused</code> &#x2F; <code>used</code>）。</li>
+<li><strong>黑客抢跑</strong>：黑客拿着偷来的 <code>Refresh_A</code> 请求续期。服务器发现其状态为 <code>unused</code>，予以放行，返回新 Access Token 和 **全新的 <code>Refresh_B**</code>。同时，将 Redis 中的 <code>Refresh_A</code> 标记为 <code>used</code>。</li>
+<li><strong>正牌触发自爆</strong>：几分钟后，正牌用户的 Access Token 过期，前端自动拿着手里的 <code>Refresh_A</code> 请求续期。</li>
+<li><strong>服务器断然惩罚</strong>：服务器一查，发现 <code>Refresh_A</code> 的状态居然是 <code>used</code>！服务器瞬间意识到<strong>遭遇了重放攻击（Token 被盗用）</strong>。</li>
+<li><strong>玉石俱焚</strong>：因为无法分辨谁是真用户，服务器立刻启动惩罚机制，<strong>清空该用户在 Redis 中的所有会话和有效 Token</strong>。</li>
+<li><strong>最终结局</strong>：黑客刚刚换取的 <code>Refresh_B</code> 瞬间沦为废纸，直接被踢下线。正牌用户虽然被迫重新登录（体验受损），但核心数据资产得到了切实的保护。</li>
+</ol>
+<hr>
+<h2 id="🎯-总结与技术选型建议"><a href="#🎯-总结与技术选型建议" class="headerlink" title="🎯 总结与技术选型建议"></a>🎯 总结与技术选型建议</h2><p>从有状态的分布式 Session，到无状态的 JWT，再到兼顾两者的双 Token 轮转自爆机制，Web 状态管理的演变本质上是在 <strong>安全、扩展性 与 用户体验</strong> 之间寻找最完美的平衡点。</p>
+<ul>
+<li><strong>如果你的项目是中大型单体，且需要绝对的强控能力（如随时强制某人下线、封号）</strong>：首选 <strong><code>Spring Session Redis</code></strong> 方案，开发成本最低，且天然支持水平扩展。</li>
+<li><strong>如果你的项目是纯粹的前后端分离、微服务架构，或者需要支持移动端多端接入</strong>：首选 <strong>双 Token 轮转方案（结合 Redis 做安全自爆）</strong>，在保障微服务无状态、高性能的同时，将安全风险降到了最低。</li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>🛠️ 从 Cookie 到双 Token：Web 登录状态管理演变史与 Java 落地实战</div>
+      <div>https://swallowgo.github.io/2026/06/11/session-jwt/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>Author</div>
+          <div>QINGDONG Zeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>Posted on</div>
+          <div>June 11, 2026</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>Licensed under</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - Attribution">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/06/10/cache/" title="服务端缓存技术全景解析与 Java 落地实战">
+                        <span class="hidden-mobile">服务端缓存技术全景解析与 Java 落地实战</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>Table of Contents</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">Keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>DD</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>JOJO</span></a> <br> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">Blog works best with JavaScript enabled</div>
+  </noscript>
+</body>
+</html>
