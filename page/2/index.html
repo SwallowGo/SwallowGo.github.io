@@ -229,384 +229,6 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h2 class="index-header">
         
-        <a href="/2026/06/10/MYSQL1/" target="_self">
-          MYSQL索引原理和SQL优化手册
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2026/06/10/MYSQL1/" target="_self">
-        <div>
-          前情提要：工作中对于理论知识缺少深入研究，SQL优化使用时才临时研究。现在简单系统性研究总结MySQL的索引原理和SQL优化的通用着手流程。  📝 MySQL 索引底层原理与 SQL 优化实战手册 一、 底层基石：B+ 树索引原理MySQL 的 InnoDB 存储引擎使用 B+ 树（B+ Tree） 来组织和管理数据。 1. B+ 树的结构特质 非叶子节点（Internal Nodes）： 只存
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2026-06-10 11:47" pubdate>
-              2026-06-10
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/MySQL/" class="category-chain-item">MySQL</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2026/06/08/database-version-control/" target="_self">
-          Spring Boot 数据库版本控制指南：演进、对比与实践
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2026/06/08/database-version-control/" target="_self">
-        <div>
-          前情提要：前司项目项目规模较小，数据库初始化不规范且不统一，存在多种流派。这里个人从个人项目到生产级项目去研究当前数据库初始化和变更的通用选择和演变历史。  一、 演进的起点：Spring Boot 原生 schema.sql 机制Spring Boot 提供了一种开箱即用的内置初始化机制，主要由 spring.sql.init.* 配置项驱动。它会自动扫描类路径（Classpath）下的特定 S
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2026-06-08 17:33" pubdate>
-              2026-06-08
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/Java/" class="category-chain-item">Java</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2026/06/08/Flux-vs-MVC/" target="_self">
-          Flux_vs_MVC
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2026/06/08/Flux-vs-MVC/" target="_self">
-        <div>
-          前情提要：之前在前司工作的时候多数项目都是使用的MVC的WEB框架，后面领导自己在调研的时候说WebFlux在高并发场景下性能比较好，然后让部分项目使用WebFlux进行重构，但是重构又不调整响应式的数据库连接框架，涉及到的数据库查询等还是阻塞等待！！！😂 从传统 Spring MVC 到响应式 Spring WebFlux 的蜕变作为一名 Java 开发者，从传统的命令式编程拓宽到响应式编程
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2026-06-08 15:14" pubdate>
-              2026-06-08
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/Java/" class="category-chain-item">Java</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2026/06/05/spring-ai/" target="_self">
-          spring-ai&amp;mimo模型使用&amp;Tavily搜索skill使用记录
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2026/06/05/spring-ai/" target="_self">
-        <div>
-          🪙 基于 Spring WebFlux + 智能体联网（Tavily）的流式架构踩坑与实战复盘📝 业务背景为了在系统内构建一个能够实时感知加密货币市场（如 BTC、ETH）黑天鹅事件与突发利好的 Web3 实时联网量化看板，我们基于 Spring Boot 3.x + Spring WebFlux + Spring AI 架构，对接了 mimo-v2.5-pro 大模型以及 Tavily 联
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2026-06-05 11:31" pubdate>
-              2026-06-05
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/Java/" class="category-chain-item">Java</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2026/06/05/OOM/" target="_self">
-          Java OOM
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2026/06/05/OOM/" target="_self">
-        <div>
-          Java OOM什么是 OOMOOM（Out OfMemoryError）表示 JVM无法继续为对象或资源分配所需内存，从而抛出java.lang.OutOfMemoryError。 需要区分： - OOM：JVM 内存申请失败，通常会抛出异常。 - JVM Crash：NativeMemory 等耗尽时，可能导致 JVM 直接退出。  常见 OOM 类型   类型             异常信
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2026-06-05 11:31" pubdate>
-              2026-06-05
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/Java-OOM/" class="category-chain-item">Java - OOM</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/11/09/Disruptor/" target="_self">
-          Disruptor
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/11/09/Disruptor/" target="_self">
-        <div>
-          Disruptor了解到这个是一个比较厉害的本地内存队列，在项目中如果有需要异步任务解耦、任务调用的场景可以考虑引入。 官方文档：https://lmax-exchange.github.io/disruptor/user-guide/index.html?spm=a2c6h.12873639.article-detail.4.56ef5953JQttFi#_using_the_disruptor
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-11-09 16:05" pubdate>
-              2025-11-09
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/Java/" class="category-chain-item">Java</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2025/11/06/MQStudyNote/" target="_self">
-          MQStudyNote
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt index-excerpt__noimg" href="/2025/11/06/MQStudyNote/" target="_self">
-        <div>
-          消息队列总结作用：削峰、异步、解耦、分布式事务、延时任务、即使通讯 副作用：系统可用性降低、系统复杂性提高，还有数据一致性问题 JMS和AMQPJMS（JAVA Message Service,java 消息服务）是 Java 的消息服务，JMS 的客户端之间可以通过 JMS 服务进行异步的消息传输。JMS（JAVA Message Service，Java 消息服务）API 是一个消息服务的标准
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2025-11-06 22:19" pubdate>
-              2025-11-06
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/Java/" class="category-chain-item">Java</a>
-  
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h2 class="index-header">
-        
         <a href="/2025/09/18/Zigzag-Conversion/" target="_self">
           Zigzag Conversion
         </a>
@@ -763,11 +385,180 @@
     </article>
   </div>
 
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2025/08/31/weekend/" target="_self">
+          Fixing GitHub Access in China with Git Proxy Settings
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/08/31/weekend/" target="_self">
+        <div>
+          Developers in China often face connectivity issues when trying to access GitHub. Here’s a common error I encountered, even with my Clash proxy app running: 1fatal: unable to access &#x27;https://githu
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2025-08-31 16:30" pubdate>
+              2025-08-31
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Git/" class="category-chain-item">Git</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2025/08/17/Comfort/" target="_self">
+          Stuck in the Suck. How I Chose Myself Over Comfort
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/08/17/Comfort/" target="_self">
+        <div>
+          I am going to study Go Language and Web3, good luck with me!&#x2F;&#x2F;todo
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2025-08-17 11:40" pubdate>
+              2025-08-17
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Daily/" class="category-chain-item">Daily</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/daily-records/">#daily records</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2025/07/08/new-life/" target="_self">
+          Hello World
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt index-excerpt__noimg" href="/2025/07/08/new-life/" target="_self">
+        <div>
+          Welcome to Hexo! This is your very first post. Check documentation for more info. If you get any problems when using Hexo, you can find the answer in troubleshooting or you can ask me on GitHub.catego
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2025-07-08 23:23" pubdate>
+              2025-07-08
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Daily/" class="category-chain-item">Daily</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+      </div>
+    </article>
+  </div>
+
 
 
   <nav aria-label="navigation">
     <span class="pagination" id="pagination">
-      <a class="extend prev" rel="prev" href="/"><i class="iconfont icon-arrowleft"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/#board">3</a><a class="extend next" rel="next" href="/page/3/#board"><i class="iconfont icon-arrowright"></i></a>
+      <a class="extend prev" rel="prev" href="/"><i class="iconfont icon-arrowleft"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span>
     </span>
   </nav>
 
