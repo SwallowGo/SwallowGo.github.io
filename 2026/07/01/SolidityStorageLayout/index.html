@@ -19,15 +19,15 @@
   <meta name="author" content="QINGDONG Zeng">
   <meta name="keywords" content="">
   
-    <meta name="description" content="一、核心思想这一节课最重要的一句话：  Storage Layout 不是人为规定的，而是 Compiler 根据固定规则推导出来的。  Compiler 的目标不是：  节省空间 提高性能  而是：  保证 Storage Layout 永远稳定（Deterministic）。  因为链上的数据一旦部署，就不能修改。 所以： Storage Layout 必须保证：  每一次编译结果一致 每一次">
+    <meta name="description" content="一、核心思想 Storage Layout 不是人为规定的，而是 Compiler 根据固定规则推导出来的。  Compiler 的目标不是：  节省空间 提高性能  而是：  保证 Storage Layout 永远稳定（Deterministic）。  因为链上的数据一旦部署，就不能修改。 所以： Storage Layout 必须保证：  每一次编译结果一致 每一次读取的位置一致 后续升级不">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Solidity Storage Layout 原理（Compiler 是如何布局 Storage 的）">
 <meta property="og:url" content="https://swallowgo.github.io/2026/07/01/SolidityStorageLayout/index.html">
 <meta property="og:site_name" content="Technology After Sunset">
-<meta property="og:description" content="一、核心思想这一节课最重要的一句话：  Storage Layout 不是人为规定的，而是 Compiler 根据固定规则推导出来的。  Compiler 的目标不是：  节省空间 提高性能  而是：  保证 Storage Layout 永远稳定（Deterministic）。  因为链上的数据一旦部署，就不能修改。 所以： Storage Layout 必须保证：  每一次编译结果一致 每一次">
+<meta property="og:description" content="一、核心思想 Storage Layout 不是人为规定的，而是 Compiler 根据固定规则推导出来的。  Compiler 的目标不是：  节省空间 提高性能  而是：  保证 Storage Layout 永远稳定（Deterministic）。  因为链上的数据一旦部署，就不能修改。 所以： Storage Layout 必须保证：  每一次编译结果一致 每一次读取的位置一致 后续升级不">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2026-07-01T09:11:52.000Z">
-<meta property="article:modified_time" content="2026-07-01T10:14:18.409Z">
+<meta property="article:modified_time" content="2026-07-01T10:15:44.476Z">
 <meta property="article:author" content="QINGDONG Zeng">
 <meta name="twitter:card" content="summary_large_image">
   
@@ -233,7 +233,7 @@
         
         
         
-          10 mins
+          9 mins
         
       </span>
     
@@ -275,8 +275,7 @@
             
               <div class="markdown-body">
                 
-                <h1 id="一、核心思想"><a href="#一、核心思想" class="headerlink" title="一、核心思想"></a>一、核心思想</h1><p>这一节课最重要的一句话：</p>
-<blockquote>
+                <h1 id="一、核心思想"><a href="#一、核心思想" class="headerlink" title="一、核心思想"></a>一、核心思想</h1><blockquote>
 <p><strong>Storage Layout 不是人为规定的，而是 Compiler 根据固定规则推导出来的。</strong></p>
 </blockquote>
 <p>Compiler 的目标不是：</p>
