@@ -1,0 +1,927 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="QINGDONG Zeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Solidity Storage Layout 原理（Compiler 是如何布局 Storage 的）一、核心思想这一节课最重要的一句话：  Storage Layout 不是人为规定的，而是 Compiler 根据固定规则推导出来的。  Compiler 的目标不是：  节省空间 提高性能  而是：  保证 Storage Layout 永远稳定（Deterministic）。  因为链上的数">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SolidityStorageLayout">
+<meta property="og:url" content="https://swallowgo.github.io/2026/07/01/SolidityStorageLayout/index.html">
+<meta property="og:site_name" content="Technology After Sunset">
+<meta property="og:description" content="Solidity Storage Layout 原理（Compiler 是如何布局 Storage 的）一、核心思想这一节课最重要的一句话：  Storage Layout 不是人为规定的，而是 Compiler 根据固定规则推导出来的。  Compiler 的目标不是：  节省空间 提高性能  而是：  保证 Storage Layout 永远稳定（Deterministic）。  因为链上的数">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2026-07-01T09:11:52.000Z">
+<meta property="article:modified_time" content="2026-07-01T09:18:15.265Z">
+<meta property="article:author" content="QINGDONG Zeng">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>SolidityStorageLayout - Technology After Sunset</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"swallowgo.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>SwallowGo&#39;s Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>Home</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>Archives</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>Categories</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>Tags</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>About</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="SolidityStorageLayout"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-07-01 17:11" pubdate>
+          July 1, 2026 pm
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.1k words
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          10 mins
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">SolidityStorageLayout</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="Solidity-Storage-Layout-原理（Compiler-是如何布局-Storage-的）"><a href="#Solidity-Storage-Layout-原理（Compiler-是如何布局-Storage-的）" class="headerlink" title="Solidity Storage Layout 原理（Compiler 是如何布局 Storage 的）"></a>Solidity Storage Layout 原理（Compiler 是如何布局 Storage 的）</h1><h1 id="一、核心思想"><a href="#一、核心思想" class="headerlink" title="一、核心思想"></a>一、核心思想</h1><p>这一节课最重要的一句话：</p>
+<blockquote>
+<p><strong>Storage Layout 不是人为规定的，而是 Compiler 根据固定规则推导出来的。</strong></p>
+</blockquote>
+<p>Compiler 的目标不是：</p>
+<ul>
+<li>节省空间</li>
+<li>提高性能</li>
+</ul>
+<p>而是：</p>
+<blockquote>
+<p><strong>保证 Storage Layout 永远稳定（Deterministic）。</strong></p>
+</blockquote>
+<p>因为链上的数据一旦部署，就不能修改。</p>
+<p>所以：</p>
+<p>Storage Layout 必须保证：</p>
+<ul>
+<li>每一次编译结果一致</li>
+<li>每一次读取的位置一致</li>
+<li>后续升级不能破坏已有数据</li>
+</ul>
+<hr>
+<h1 id="二、Storage-Slot"><a href="#二、Storage-Slot" class="headerlink" title="二、Storage Slot"></a>二、Storage Slot</h1><p>Storage 最小存储单位：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs text">1 Slot = 32 Byte = 256 bit<br></code></pre></td></tr></table></figure>
+
+<p>例如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs solidity">uint256 totalSupply;<br></code></pre></td></tr></table></figure>
+
+<p>Compiler：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs text">slot0<br>+--------------------------------+<br>|          totalSupply           |<br>+--------------------------------+<br></code></pre></td></tr></table></figure>
+
+<p>一个 uint256 恰好占满一个 Slot。</p>
+<hr>
+<h1 id="三、Storage-Packing（存储压缩）"><a href="#三、Storage-Packing（存储压缩）" class="headerlink" title="三、Storage Packing（存储压缩）"></a>三、Storage Packing（存储压缩）</h1><p>如果变量小于 32 Byte。</p>
+<p>Compiler 会尽可能放入同一个 Slot。</p>
+<p>例如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs solidity">uint128 a;<br>uint64 b;<br>bool c;<br></code></pre></td></tr></table></figure>
+
+<p>Compiler：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs text">slot0<br><br>+-----------------------------------------+<br>| uint128 | uint64 | bool | 剩余空间      |<br>+-----------------------------------------+<br></code></pre></td></tr></table></figure>
+
+<p>注意：</p>
+<p>Storage Packing 只能发生在：</p>
+<blockquote>
+<p><strong>连续声明的小变量之间。</strong></p>
+</blockquote>
+<p>Compiler 不会为了节省空间而调整变量顺序。</p>
+<hr>
+<h1 id="四、为什么-Compiler-不会调整变量顺序？"><a href="#四、为什么-Compiler-不会调整变量顺序？" class="headerlink" title="四、为什么 Compiler 不会调整变量顺序？"></a>四、为什么 Compiler 不会调整变量顺序？</h1><p>例如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs solidity">uint256 totalSupply;<br>address owner;<br></code></pre></td></tr></table></figure>
+
+<p>Compiler 永远都是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs text">slot0 -&gt; totalSupply<br><br>slot1 -&gt; owner<br></code></pre></td></tr></table></figure>
+
+<p>不会变成：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs text">slot0 -&gt; owner<br><br>slot1 -&gt; totalSupply<br></code></pre></td></tr></table></figure>
+
+<p>原因：</p>
+<p>Storage Layout 必须稳定。</p>
+<p>否则：</p>
+<p>历史数据将全部读取错误。</p>
+<p>因此：</p>
+<p>Compiler 宁可浪费空间。</p>
+<p>也绝不会修改变量顺序。</p>
+<hr>
+<h1 id="五、Struct-的-Storage-Layout"><a href="#五、Struct-的-Storage-Layout" class="headerlink" title="五、Struct 的 Storage Layout"></a>五、Struct 的 Storage Layout</h1><p>Struct 不会像 Java 对象一样产生引用。</p>
+<p>Compiler 会直接展开（Flatten）。</p>
+<p>例如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs solidity">struct User&#123;<br>    uint128 age;<br>    bool vip;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs solidity">User user;<br></code></pre></td></tr></table></figure>
+
+<p>Compiler：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs text">slot0<br><br>+--------------------------------+<br>| age | vip | 剩余空间           |<br>+--------------------------------+<br></code></pre></td></tr></table></figure>
+
+<p>并不存在：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs text">slot0<br><br>↓<br><br>User对象<br><br>↓<br><br>age<br><br>vip<br></code></pre></td></tr></table></figure>
+
+<p>这种对象引用。</p>
+<hr>
+<h1 id="六、Struct-Boundary（Struct-边界）"><a href="#六、Struct-Boundary（Struct-边界）" class="headerlink" title="六、Struct Boundary（Struct 边界）"></a>六、Struct Boundary（Struct 边界）</h1><p>Struct 内部：</p>
+<p>允许 Packing。</p>
+<p>例如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs solidity">struct User&#123;<br><br>    bool a;<br><br>    bool b;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>两个 bool 可以放入同一个 Slot。</p>
+<p>但是：</p>
+<p>Struct 外部：</p>
+<p>不能继续利用 Struct 剩余空间。</p>
+<p>例如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs solidity">struct User&#123;<br>    uint128 age;<br>    bool vip;<br>&#125;<br><br>User user;<br><br>uint256 owner;<br></code></pre></td></tr></table></figure>
+
+<p>最终：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs text">slot0<br><br>↓<br><br>age<br><br>vip<br><br>剩余15Byte<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs text">slot1<br><br>↓<br><br>owner<br></code></pre></td></tr></table></figure>
+
+<p>owner 不会继续利用 slot0 剩余空间。</p>
+<p>原因：</p>
+<p>Struct 是一个独立的 Storage Packing 边界。</p>
+<hr>
+<h1 id="七、Struct-的升级规则"><a href="#七、Struct-的升级规则" class="headerlink" title="七、Struct 的升级规则"></a>七、Struct 的升级规则</h1><p>对于已经部署的合约：</p>
+<p>可以：</p>
+<p>✅ 在 Struct 末尾新增字段</p>
+<p>如果当前 Slot 放得下：</p>
+<p>继续 Packing。</p>
+<p>放不下：</p>
+<p>自动使用下一个 Slot。</p>
+<p>禁止：</p>
+<ul>
+<li>修改字段顺序</li>
+<li>修改字段类型</li>
+<li>删除字段</li>
+<li>中间插入字段</li>
+</ul>
+<p>否则：</p>
+<p>Storage Layout 将发生变化。</p>
+<p>历史数据全部失效。</p>
+<hr>
+<h1 id="八、Mapping-的-Storage-Layout"><a href="#八、Mapping-的-Storage-Layout" class="headerlink" title="八、Mapping 的 Storage Layout"></a>八、Mapping 的 Storage Layout</h1><p>Mapping 最大特点：</p>
+<blockquote>
+<p>Key 数量未知。</p>
+</blockquote>
+<p>因此：</p>
+<p>Compiler 无法提前分配空间。</p>
+<p>例如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs solidity">mapping(address=&gt;uint) balances;<br></code></pre></td></tr></table></figure>
+
+<p>假设：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs text">balances<br><br>↓<br><br>Base Slot = slot1<br></code></pre></td></tr></table></figure>
+
+<p>Alice：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs text">Storage Address<br><br>=<br><br>keccak256(Alice, slot1)<br></code></pre></td></tr></table></figure>
+
+<p>Bob：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs text">Storage Address<br><br>=<br><br>keccak256(Bob, slot1)<br></code></pre></td></tr></table></figure>
+
+<p>Tom：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs text">Storage Address<br><br>=<br><br>keccak256(Tom, slot1)<br></code></pre></td></tr></table></figure>
+
+<p>因此：</p>
+<p>Mapping：</p>
+<p>每一个 Key。</p>
+<p>都会 Hash 一次。</p>
+<hr>
+<h1 id="九、为什么-Mapping-使用-Hash？"><a href="#九、为什么-Mapping-使用-Hash？" class="headerlink" title="九、为什么 Mapping 使用 Hash？"></a>九、为什么 Mapping 使用 Hash？</h1><p>原因有两个：</p>
+<p>第一：</p>
+<p>不知道未来有多少 Key。</p>
+<p>第二：</p>
+<p>避免与普通变量发生冲突。</p>
+<p>Hash 后：</p>
+<p>Storage 地址会跳到一个几乎随机的巨大位置。</p>
+<p>例如：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs text">slot0<br><br>slot1<br><br>slot2<br><br>...<br><br>keccak256(Alice, slot1)<br><br>↓<br><br>648923749238749827349827349...<br></code></pre></td></tr></table></figure>
+
+<p>因此：</p>
+<p>普通变量永远不会与 Mapping 数据冲突。</p>
+<hr>
+<h1 id="十、Dynamic-Array-的-Storage-Layout"><a href="#十、Dynamic-Array-的-Storage-Layout" class="headerlink" title="十、Dynamic Array 的 Storage Layout"></a>十、Dynamic Array 的 Storage Layout</h1><p>例如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs solidity">uint256[] nums;<br></code></pre></td></tr></table></figure>
+
+<p>数组变量：</p>
+<p>Base Slot：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs text">slot0<br></code></pre></td></tr></table></figure>
+
+<p>注意：</p>
+<p>slot0：</p>
+<p>只存：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs text">length<br></code></pre></td></tr></table></figure>
+
+<p>真正的数据：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs text">base = keccak256(slot0)<br></code></pre></td></tr></table></figure>
+
+<p>例如：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs text">keccak(slot0)<br><br>↓<br><br>0xABCDEF...<br></code></pre></td></tr></table></figure>
+
+<p>数组：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs text">0xABCDEF + 0<br><br>↓<br><br>nums[0]<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs text">0xABCDEF + 1<br><br>↓<br><br>nums[1]<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs text">0xABCDEF + 2<br><br>↓<br><br>nums[2]<br></code></pre></td></tr></table></figure>
+
+<p>因此：</p>
+<p>Dynamic Array：</p>
+<p>只 Hash 一次。</p>
+<p>之后：</p>
+<p>连续存储。</p>
+<hr>
+<h1 id="十一、Struct-Array"><a href="#十一、Struct-Array" class="headerlink" title="十一、Struct Array"></a>十一、Struct Array</h1><p>例如：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs solidity">struct User&#123;<br><br>    uint256 id;<br><br>    uint256 balance;<br>&#125;<br><br>User[] users;<br></code></pre></td></tr></table></figure>
+
+<p>Storage：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs text">slot0<br><br>↓<br><br>length<br></code></pre></td></tr></table></figure>
+
+<p>真正数据：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs text">base = keccak(slot0)<br></code></pre></td></tr></table></figure>
+
+<p>第一个 User：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs text">base<br><br>↓<br><br>id<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs text">base+1<br><br>↓<br><br>balance<br></code></pre></td></tr></table></figure>
+
+<p>第二个 User：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs text">base+2<br><br>↓<br><br>id<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs text">base+3<br><br>↓<br><br>balance<br></code></pre></td></tr></table></figure>
+
+<p>Compiler 会根据 Struct 所占 Slot 数自动计算每个元素的起始位置。</p>
+<hr>
+<h1 id="十二、Storage-寻址统一规则"><a href="#十二、Storage-寻址统一规则" class="headerlink" title="十二、Storage 寻址统一规则"></a>十二、Storage 寻址统一规则</h1><p>所有复杂数据结构最终都会转换成：</p>
+<blockquote>
+<p><strong>Storage Slot 的计算。</strong></p>
+</blockquote>
+<p>统一公式：</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>起始位置</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>普通变量</td>
+<td>当前 Slot</td>
+</tr>
+<tr>
+<td>Struct</td>
+<td>当前 Slot，展开（Flatten）</td>
+</tr>
+<tr>
+<td>Mapping</td>
+<td>keccak256(key, baseSlot)</td>
+</tr>
+<tr>
+<td>Dynamic Array</td>
+<td>keccak256(baseSlot)</td>
+</tr>
+<tr>
+<td>Struct Array</td>
+<td>keccak256(baseSlot) + index × Struct 所占 Slot</td>
+</tr>
+</tbody></table>
+<p>可以发现：</p>
+<p>Struct 并没有自己的寻址规则。</p>
+<p>Struct 只是：</p>
+<blockquote>
+<p><strong>展开规则（Expansion Rule）。</strong></p>
+</blockquote>
+<p>真正决定 Storage 地址的：</p>
+<p>始终都是：</p>
+<blockquote>
+<p><strong>起始 Slot 如何计算。</strong></p>
+</blockquote>
+<hr>
+<h1 id="十三、为什么不同合约都可以有-slot0？"><a href="#十三、为什么不同合约都可以有-slot0？" class="headerlink" title="十三、为什么不同合约都可以有 slot0？"></a>十三、为什么不同合约都可以有 slot0？</h1><p>例如：</p>
+<p>ERC20A：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs text">slot0<br><br>↓<br><br>totalSupply<br></code></pre></td></tr></table></figure>
+
+<p>ERC20B：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs text">slot0<br><br>↓<br><br>totalSupply<br></code></pre></td></tr></table></figure>
+
+<p>不会冲突。</p>
+<p>原因：</p>
+<p>Storage 不是全局共享。</p>
+<p>而是：</p>
+<p>每个合约拥有自己独立的 Storage 空间。</p>
+<p>因此：</p>
+<p>真正读取的数据实际上可以理解为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs text">当前合约<br><br>↓<br><br>Storage<br><br>↓<br><br>slot0<br></code></pre></td></tr></table></figure>
+
+<p>而不是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs text">全局<br><br>↓<br><br>slot0<br></code></pre></td></tr></table></figure>
+
+
+<hr>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>这里梳理了：</p>
+<ul>
+<li>Slot 是什么</li>
+<li>Compiler 如何布局变量</li>
+<li>Storage Packing</li>
+<li>Struct Flatten</li>
+<li>Struct Boundary</li>
+<li>Mapping Hash 寻址</li>
+<li>Dynamic Array Hash 寻址</li>
+<li>Struct Array 存储方式</li>
+<li>为什么 Hash 不会冲突</li>
+<li>为什么每个合约都可以拥有自己的 slot0</li>
+</ul>
+<p>最大的收获不是记住某个规则。而是建立一种 Compiler 思维：</p>
+<blockquote>
+<p><strong>Storage Layout 并不是人为设计出来的，而是 Compiler 根据固定规则一步一步推导出来的。</strong></p>
+</blockquote>
+<p>以后面对任何复杂的数据结构，都可以按照 Compiler 的思路自行推导，而不是依赖文档查询。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Web3/" class="category-chain-item">Web3</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>SolidityStorageLayout</div>
+      <div>https://swallowgo.github.io/2026/07/01/SolidityStorageLayout/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>Author</div>
+          <div>QINGDONG Zeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>Posted on</div>
+          <div>July 1, 2026</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>Licensed under</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - Attribution">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/07/01/understand-EVM/" title="了解EVM">
+                        <span class="hidden-mobile">了解EVM</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>Table of Contents</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">Keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>DD</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>JOJO</span></a> <br> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">Blog works best with JavaScript enabled</div>
+  </noscript>
+</body>
+</html>
