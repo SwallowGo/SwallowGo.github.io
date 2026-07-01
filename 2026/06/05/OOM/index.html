@@ -1,0 +1,720 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="QINGDONG Zeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Java OOM什么是 OOMOOM（Out OfMemoryError）表示 JVM无法继续为对象或资源分配所需内存，从而抛出java.lang.OutOfMemoryError。 需要区分： - OOM：JVM 内存申请失败，通常会抛出异常。 - JVM Crash：NativeMemory 等耗尽时，可能导致 JVM 直接退出。  常见 OOM 类型   类型             异常信">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Java OOM">
+<meta property="og:url" content="https://swallowgo.github.io/2026/06/05/OOM/index.html">
+<meta property="og:site_name" content="Technology After Sunset">
+<meta property="og:description" content="Java OOM什么是 OOMOOM（Out OfMemoryError）表示 JVM无法继续为对象或资源分配所需内存，从而抛出java.lang.OutOfMemoryError。 需要区分： - OOM：JVM 内存申请失败，通常会抛出异常。 - JVM Crash：NativeMemory 等耗尽时，可能导致 JVM 直接退出。  常见 OOM 类型   类型             异常信">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2026-06-05T03:31:42.000Z">
+<meta property="article:modified_time" content="2026-07-01T02:09:50.932Z">
+<meta property="article:author" content="QINGDONG Zeng">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>Java OOM - Technology After Sunset</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"swallowgo.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>SwallowGo&#39;s Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>Home</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>Archives</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>Categories</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>Tags</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>About</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Java OOM"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-06-05 11:31" pubdate>
+          June 5, 2026 am
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          619 words
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          6 mins
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Java OOM</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="Java-OOM"><a href="#Java-OOM" class="headerlink" title="Java OOM"></a>Java OOM</h1><h2 id="什么是-OOM"><a href="#什么是-OOM" class="headerlink" title="什么是 OOM"></a>什么是 OOM</h2><p>OOM（Out OfMemoryError）表示 JVM<br>无法继续为对象或资源分配所需内存，从而抛出<code>java.lang.OutOfMemoryError</code>。</p>
+<p>需要区分： - OOM：JVM 内存申请失败，通常会抛出异常。 - JVM Crash：NativeMemory 等耗尽时，可能导致 JVM 直接退出。</p>
+<hr>
+<h2 id="常见-OOM-类型"><a href="#常见-OOM-类型" class="headerlink" title="常见 OOM 类型"></a>常见 OOM 类型</h2><hr>
+<p>  类型             异常信息                    常见原因</p>
+<hr>
+<p>  Heap OOM         Java heap space             对象过多、内存泄漏</p>
+<p>  GC Overhead      GC overhead limit exceeded  GC 长时间回收效果极差</p>
+<p>  Metaspace OOM    Metaspace                   动态代理、类加载泄漏</p>
+<p>  Direct Memory    Direct buffer memory        Netty、DirectByteBuffer<br>  OOM                                          使用不当</p>
+<p>  Native Thread    unable to create native     线程数量过多<br>  OOM              thread                      </p>
+<p>  Code Cache OOM   CodeCache                   JIT 编译缓存耗尽（较少见）</p>
+<h2 id="Native-Memory-Native-Memory-JNI、malloc、直接内存耗尽-OOM"><a href="#Native-Memory-Native-Memory-JNI、malloc、直接内存耗尽-OOM" class="headerlink" title="  Native Memory    Native Memory               JNI、malloc、直接内存耗尽  OOM                                          "></a>  Native Memory    Native Memory               JNI、malloc、直接内存耗尽<br>  OOM                                          </h2><hr>
+<h2 id="OOM-的常见原因与场景"><a href="#OOM-的常见原因与场景" class="headerlink" title="OOM 的常见原因与场景"></a>OOM 的常见原因与场景</h2><h3 id="1-创建对象过多"><a href="#1-创建对象过多" class="headerlink" title="1. 创建对象过多"></a>1. 创建对象过多</h3><ul>
+<li>一次查询大量数据加载到内存</li>
+<li>Excel&#x2F;CSV 一次性导出大量数据</li>
+<li>大 JSON 一次性反序列化</li>
+</ul>
+<h3 id="2-内存泄漏"><a href="#2-内存泄漏" class="headerlink" title="2. 内存泄漏"></a>2. 内存泄漏</h3><ul>
+<li>静态集合长期持有对象</li>
+<li>ThreadLocal 未 remove</li>
+<li>Listener、回调未注销</li>
+<li>Socket、文件流等资源未关闭</li>
+</ul>
+<h3 id="3-缓存无限增长"><a href="#3-缓存无限增长" class="headerlink" title="3. 缓存无限增长"></a>3. 缓存无限增长</h3><ul>
+<li>HashMap&#x2F;ConcurrentHashMap 无限制增长</li>
+<li>本地缓存未配置容量和过期策略</li>
+</ul>
+<h3 id="4-JVM-参数配置不合理"><a href="#4-JVM-参数配置不合理" class="headerlink" title="4. JVM 参数配置不合理"></a>4. JVM 参数配置不合理</h3><ul>
+<li>堆空间过小</li>
+<li>Metaspace 设置过小</li>
+<li>Direct Memory 设置不足</li>
+</ul>
+<hr>
+<h2 id="如何防范-OOM"><a href="#如何防范-OOM" class="headerlink" title="如何防范 OOM"></a>如何防范 OOM</h2><h3 id="开发阶段"><a href="#开发阶段" class="headerlink" title="开发阶段"></a>开发阶段</h3><ul>
+<li>分页查询、游标查询、流式处理</li>
+<li>控制对象生命周期</li>
+<li>ThreadLocal 使用 finally remove</li>
+<li>缓存设置容量和过期时间</li>
+<li>合理使用线程池</li>
+<li>大文件采用流式读写</li>
+</ul>
+<h3 id="生产阶段"><a href="#生产阶段" class="headerlink" title="生产阶段"></a>生产阶段</h3><ul>
+<li>合理配置 Xms&#x2F;Xmx</li>
+<li>开启 HeapDump：</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs &#123;">&lt;!-- --&gt;<br></code></pre></td></tr></table></figure>
+<pre><code class="hljs">-XX:+HeapDumpOnOutOfMemoryError
+-XX:HeapDumpPath=/dump
+</code></pre>
+<ul>
+<li>开启 GC 日志</li>
+<li>建立 JVM 监控（Heap、GC、线程、Metaspace）</li>
+<li>缓存限流和容量规划</li>
+</ul>
+<hr>
+<h2 id="OOM-排查流程"><a href="#OOM-排查流程" class="headerlink" title="OOM 排查流程"></a>OOM 排查流程</h2><ol>
+<li>查看异常日志，确认 OOM 类型。</li>
+<li>收集 Heap Dump（jcmd&#x2F;jmap）。</li>
+<li>使用 MAT 分析：<ul>
+<li>Histogram</li>
+<li>Dominator Tree</li>
+<li>Leak Suspects</li>
+</ul>
+</li>
+<li>分析 GC 日志（GCEasy、GCViewer）。</li>
+<li>使用 Arthas、jstack、jcmd 等定位代码。</li>
+<li>修复问题并压测验证。</li>
+</ol>
+<hr>
+<h2 id="常用排查工具"><a href="#常用排查工具" class="headerlink" title="常用排查工具"></a>常用排查工具</h2><p>  工具       用途</p>
+<hr>
+<p>  jps        查看 Java 进程<br>  jcmd       JVM 综合诊断<br>  jmap       导出 Heap Dump<br>  jstack     查看线程栈<br>  jstat      查看 GC<br>  MAT        Heap Dump 分析<br>  Arthas     在线诊断<br>  VisualVM   JVM 监控<br>  GCEasy     GC 日志分析</p>
+<hr>
+<h2 id="常见修复方案"><a href="#常见修复方案" class="headerlink" title="常见修复方案"></a>常见修复方案</h2><p>  问题                修复方案</p>
+<hr>
+<p>  List 过大           分页、流式处理<br>  缓存无限增长        容量限制、TTL<br>  ThreadLocal 泄漏    finally remove<br>  静态集合泄漏        有界缓存、及时清理<br>  大文件处理          流式 IO<br>  Metaspace OOM       修复类加载泄漏，调整参数<br>  Direct Memory OOM   释放 DirectBuffer，检查 Netty 引用计数<br>  Native Thread OOM   合理配置线程池</p>
+<hr>
+<h2 id="开发与生产的区别"><a href="#开发与生产的区别" class="headerlink" title="开发与生产的区别"></a>开发与生产的区别</h2><p>  维度     开发          生产</p>
+<hr>
+<p>  目标     复现与修复    快速止损、定位根因<br>  数据量   小规模        海量数据、高并发<br>  排查     Debug、日志   Dump、MAT、GC 日志、Arthas<br>  配置     默认即可      OOM Dump、监控、GC 日志<br>  修复     修改代码      修复+压测+监控验证</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Java-OOM/" class="category-chain-item">Java - OOM</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Java OOM</div>
+      <div>https://swallowgo.github.io/2026/06/05/OOM/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>Author</div>
+          <div>QINGDONG Zeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>Posted on</div>
+          <div>June 5, 2026</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>Licensed under</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - Attribution">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2026/06/05/spring-ai/" title="spring-ai&amp;mimo模型使用&amp;Tavily搜索skill使用记录">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">spring-ai&amp;mimo模型使用&amp;Tavily搜索skill使用记录</span>
+                        <span class="visible-mobile">Previous</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/11/09/Disruptor/" title="Disruptor">
+                        <span class="hidden-mobile">Disruptor</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>Table of Contents</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">Keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>DD</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>JOJO</span></a> <br> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">Blog works best with JavaScript enabled</div>
+  </noscript>
+</body>
+</html>
