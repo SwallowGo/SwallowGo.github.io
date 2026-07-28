@@ -30,7 +30,7 @@
 <meta property="og:image" content="https://swallowgo.github.io/images/flink1.assets/sliding.png">
 <meta property="og:image" content="https://swallowgo.github.io/images/flink1.assets/session.png">
 <meta property="article:published_time" content="2026-07-28T04:03:58.000Z">
-<meta property="article:modified_time" content="2026-07-28T06:53:25.151Z">
+<meta property="article:modified_time" content="2026-07-28T07:02:05.073Z">
 <meta property="article:author" content="QINGDONG Zeng">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://swallowgo.github.io/images/flink1.assets/tumbling.png">
@@ -226,7 +226,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          1.9k words
+          2.8k words
         
       </span>
     
@@ -237,7 +237,7 @@
         
         
         
-          16 mins
+          24 mins
         
       </span>
     
@@ -372,6 +372,88 @@
 <p>我们可以如下定义和使用 AggregateFunction：</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><code class="hljs Java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">AverageAggregateFunction</span><br>        <span class="hljs-keyword">implements</span> <span class="hljs-title class_">AggregateFunction</span>&lt;Tuple2&lt;String, Integer&gt;, Tuple2&lt;Long, Long&gt;, Double&gt; &#123;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> Tuple2&lt;Long, Long&gt; <span class="hljs-title function_">createAccumulator</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-keyword">return</span> Tuple2.of(<span class="hljs-number">0L</span>, <span class="hljs-number">0L</span>);<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> Tuple2&lt;Long, Long&gt; <span class="hljs-title function_">add</span><span class="hljs-params">(Tuple2&lt;String, Integer&gt; value, Tuple2&lt;Long, Long&gt; accumulator)</span> &#123;<br>        <span class="hljs-keyword">return</span> Tuple2.of(accumulator.f0 + value.f1, accumulator.f1 + <span class="hljs-number">1</span>);<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> Double <span class="hljs-title function_">getResult</span><span class="hljs-params">(Tuple2&lt;Long, Long&gt; accumulator)</span> &#123;<br>        <span class="hljs-keyword">return</span> ((<span class="hljs-type">double</span>) accumulator.f0) / accumulator.f1;<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> Tuple2&lt;Long, Long&gt; <span class="hljs-title function_">merge</span><span class="hljs-params">(Tuple2&lt;Long, Long&gt; acc1, Tuple2&lt;Long, Long&gt; acc2)</span> &#123;<br>        <span class="hljs-keyword">return</span> Tuple2.of(acc1.f0 + acc2.f0, acc1.f1 + acc2.f1);<br>    &#125;<br>&#125;<br><br>DataStreamSource&lt;String&gt; source = env.socketTextStream(<span class="hljs-string">&quot;192.168.117.128&quot;</span>, <span class="hljs-number">9999</span>);<br><br>source.flatMap((String value, Collector&lt;Tuple2&lt;String, Integer&gt;&gt; collector) -&gt; &#123;<br>    String[] words = value.split(<span class="hljs-string">&quot;,&quot;</span>);<br>    collector.collect(Tuple2.of(words[<span class="hljs-number">0</span>], Integer.valueOf(words[<span class="hljs-number">1</span>])));<br>&#125;).returns(Types.TUPLE(Types.STRING, Types.INT))<br>    .keyBy(value -&gt; value.f0)<br>    .window(TumblingProcessingTimeWindows.of(Time.seconds(<span class="hljs-number">20</span>)))<br>    .aggregate(<span class="hljs-keyword">new</span> <span class="hljs-title class_">AverageAggregateFunction</span>())<br>    .print();<br></code></pre></td></tr></table></figure>
 <p>通过该 AggregateFunction，用户可以计算各 key 值在窗口范围内对应的平均数。</p>
+<h4 id="ProcessWindowFunction"><a href="#ProcessWindowFunction" class="headerlink" title="ProcessWindowFunction"></a>ProcessWindowFunction</h4><p>ProcessWindowFunction 包含了一个含有窗口所有元素的可迭代器，以及一个具有时间和状态信息访问权的上下文对象。它有 4 个参数，分别是：</p>
+<ul>
+<li>输入类型（IN）：输入流中的元素类型</li>
+<li>输出类型（OUT）：输出流中的元素类型</li>
+<li>分区键类型（KEY）：用于分区的字段的元素类型</li>
+<li>窗口类型（W）：通常为 TimeWindow</li>
+<li>ProcessWindowFunction 的特性，使得它比其他窗口函数更加灵活，但这是以性能和资源消耗为代价的，因为在 ProcessWindowFunction 中元素不能增量聚合，而是需要在内部缓冲，直到窗口准备就绪为止。</li>
+</ul>
+<p>以下是 ProcessWindowFunction 的使用示例：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs Java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">CountWindowFunction</span> <span class="hljs-keyword">extends</span> <span class="hljs-title class_">ProcessWindowFunction</span>&lt;Tuple2&lt;String, Integer&gt;, String, String, TimeWindow&gt; &#123;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">process</span><span class="hljs-params">(String key, Context context, Iterable&lt;Tuple2&lt;String, Integer&gt;&gt; iterable,</span><br><span class="hljs-params">                        Collector&lt;String&gt; collector)</span> &#123;<br><br>        System.out.println(<span class="hljs-string">&quot;------- process invoked -------&quot;</span>);<br>        <br>        <span class="hljs-type">long</span> <span class="hljs-variable">count</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>;<br>        <span class="hljs-keyword">for</span> (Tuple2&lt;String, Integer&gt; element : iterable) &#123;<br>            count++;<br>        &#125;<br><br>        collector.collect(<span class="hljs-string">&quot;Window: &quot;</span> + context.window() + <span class="hljs-string">&quot;count: &quot;</span> + count);<br>    &#125;<br>&#125;<br><br>DataStream&lt;Tuple2&lt;String, Long&gt;&gt; input = ...;<br><br>input<br>    .keyBy(&lt;key selector&gt;)<br>    .window(&lt;window assigner&gt;)<br>    .process(<span class="hljs-keyword">new</span> <span class="hljs-title class_">CountWindowFunction</span>());<br></code></pre></td></tr></table></figure>
+<h4 id="ProcessWindowFunction-with-Incremental-Aggregation"><a href="#ProcessWindowFunction-with-Incremental-Aggregation" class="headerlink" title="ProcessWindowFunction with Incremental Aggregation"></a>ProcessWindowFunction with Incremental Aggregation</h4><p>ProcessWindowFunction 也可以和 ReduceFunction 或者 AggregateFunction 结合使用。通过这种方式，用户既可以在窗口期内实现增量计算，又可以在窗口结束时触发 ProcessWindowFunction，进而获取元数据信息。</p>
+<p>以下是 ProcessWindowFunction 与 AggregateFunction 结合使用的示例：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs Java">DataStream&lt;Tuple2&lt;String, Long&gt;&gt; input = ...;<br><br>input<br>    .keyBy(&lt;key selector&gt;)<br>    .window(&lt;window assigner&gt;)<br>    .aggregate(<span class="hljs-keyword">new</span> <span class="hljs-title class_">AverageAggregate</span>(), <span class="hljs-keyword">new</span> <span class="hljs-title class_">MyProcessWindowFunction</span>());<br></code></pre></td></tr></table></figure>
+<blockquote>
+<p>AggregateFunction 的输出类型要与 ProcessWindowFunction 的输入类型一致。</p>
+</blockquote>
+<h3 id="Trigger"><a href="#Trigger" class="headerlink" title="Trigger"></a>Trigger</h3><p>Trigger，中文名为触发器，决定了何时启动 Window Function 来处理窗口中的数据以及何时将窗口内的数据清理。</p>
+<p>每一个 Window Assigner 都会有一个默认的触发器。若默认触发器无法满足业务需求，用户也可以通过实现 Trigger 抽象类满足个性化需求。</p>
+<p>Trigger 抽象类主要声明了以下 5 个方法：</p>
+<ul>
+<li>onElement：每一个元素进入窗口时都会触发</li>
+<li>onProcessingTime：基于 processing time 的计时器（Timer）到期时触发</li>
+<li>onEventTime：基于 event time 的计时器（Timer）到期时触发</li>
+<li>onMerge：当两个 Window 合并时同时合并其相应的 Trigger</li>
+<li>clear：执行窗口及状态数据的清除方法</li>
+</ul>
+<blockquote>
+<p>onProcessingTime(…) 和 onEventTime(…) 本质上是由 ScheduledThreadPoolExecutor 的定时调度实现的，其实现原理可参考：<a target="_blank" rel="noopener" href="https://cloud.tencent.com/developer/article/1677299%E3%80%82">https://cloud.tencent.com/developer/article/1677299。</a></p>
+</blockquote>
+<p>在上述的 onElement、onProcessingTime、onEventTime 方法中，会返回一个 TriggerResult，窗口会根据 TriggerResult 的值决定下一步行为。关于 TriggerResult 和窗口行为的映射关系可参考下表：</p>
+<table>
+<thead>
+<tr>
+<th>TriggerResult</th>
+<th>窗口行为</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CONTINUE</td>
+<td>不进行操作</td>
+</tr>
+<tr>
+<td>FIRE</td>
+<td>触发计算</td>
+</tr>
+<tr>
+<td>PURGE</td>
+<td>清除窗口内的数据</td>
+</tr>
+<tr>
+<td>FIRE_AND_PURGE</td>
+<td>触发计算并在完成后清除窗口内的数据</td>
+</tr>
+</tbody></table>
+<h3 id="Evictor"><a href="#Evictor" class="headerlink" title="Evictor"></a>Evictor</h3><p>Evictor，中文名为驱逐者，可以在 Trigger 触发后、窗口函数使用之前或之后 清除窗口内的数据。</p>
+<p>默认情况下，Window 的操作类为 WindowOperator，它没有使用到 Evictor。若用户需要使用 Evictor，需要显示调用 evictor(…) 方法，此时，Window 的操作类会变为 EvictingWindowOperator，并由其完成 Evictor 的调用。</p>
+<p>Evictor 的使用示例如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs Java">DataStream&lt;T&gt; input = ...;<br><br>input<br>    .keyBy(&lt;key selector&gt;)<br>    .window(&lt;window assigner&gt;)<br>    .evictor(CountEvictor.of(<span class="hljs-number">2L</span>))<br></code></pre></td></tr></table></figure>
+<p>在 Flink 中，已经预设了 3 种驱逐器：</p>
+<table>
+<thead>
+<tr>
+<th>驱逐器类型</th>
+<th>驱逐器说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CountEvictor</td>
+<td>在窗口中维护指定数量的元素，若当前 窗口元素数量 多于 用户指定的数量，从窗口缓冲区的 头部 丢弃多余的元素</td>
+</tr>
+<tr>
+<td>TimeEvictor</td>
+<td>对于给定的窗口，找到元素中最大的时间戳 max_ts，并删除时间戳小于 max_ts - interval 的所有元素，其中，interval 为以毫秒为单位的 TimeEvictor 的参数</td>
+</tr>
+<tr>
+<td>DeltaEvictor</td>
+<td>使用 DeltaFunction 计算窗口缓冲区中 最后一个元素 与 其他元素 之间的差值，并删除差值大于或等于 用户指定阈值 的元素</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>使用驱逐器将无法实现增量聚合，所有元素需要统一由驱逐器处理才交给窗口函数。</p>
+</blockquote>
 
                 
               </div>
