@@ -1,0 +1,730 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="QINGDONG Zeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Flink WindowFlink 是流处理计算框架，专为流式数据而生。 流式数据有一个特点，即无界性。在很多场景中，这种无界性会使很多计算指标失去了意义，如结果统计、大小排序等。Window（窗口）的出现，正是为了解决无界性的问题。它可以将无界数据按照某种规则划分成有界数据，并在之上完成业务计算。 这里着重整理Flink 的 Window API，以帮助了解 Flink Window 的概念及使">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Flink Window">
+<meta property="og:url" content="https://swallowgo.github.io/2026/07/28/flink4/index.html">
+<meta property="og:site_name" content="Technology After Sunset">
+<meta property="og:description" content="Flink WindowFlink 是流处理计算框架，专为流式数据而生。 流式数据有一个特点，即无界性。在很多场景中，这种无界性会使很多计算指标失去了意义，如结果统计、大小排序等。Window（窗口）的出现，正是为了解决无界性的问题。它可以将无界数据按照某种规则划分成有界数据，并在之上完成业务计算。 这里着重整理Flink 的 Window API，以帮助了解 Flink Window 的概念及使">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://swallowgo.github.io/images/flink1.assets/tumbling.png">
+<meta property="og:image" content="https://swallowgo.github.io/images/flink1.assets/sliding.png">
+<meta property="og:image" content="https://swallowgo.github.io/images/flink1.assets/session.png">
+<meta property="article:published_time" content="2026-07-28T04:03:58.000Z">
+<meta property="article:modified_time" content="2026-07-28T06:53:25.151Z">
+<meta property="article:author" content="QINGDONG Zeng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://swallowgo.github.io/images/flink1.assets/tumbling.png">
+  
+  
+  
+  <title>Flink Window - Technology After Sunset</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"swallowgo.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>SwallowGo&#39;s Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>Home</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>Archives</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>Categories</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>Tags</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>About</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Flink Window"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-07-28 12:03" pubdate>
+          July 28, 2026 pm
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.9k words
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          16 mins
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Flink Window</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="Flink-Window"><a href="#Flink-Window" class="headerlink" title="Flink Window"></a>Flink Window</h1><p>Flink 是流处理计算框架，专为流式数据而生。</p>
+<p>流式数据有一个特点，即无界性。在很多场景中，这种无界性会使很多计算指标失去了意义，如结果统计、大小排序等。Window（窗口）的出现，正是为了解决无界性的问题。它可以将无界数据按照某种规则划分成有界数据，并在之上完成业务计算。</p>
+<p>这里着重整理Flink 的 Window API，以帮助了解 Flink Window 的概念及使用方式。</p>
+<blockquote>
+<p>在 Flink 1.13 版本中，常用的 Window 基本都是基于时间的 TimeWindow，因此下文提到的 Window 默认都指 TimeWindow。</p>
+</blockquote>
+<h3 id="Window-Lifecycle"><a href="#Window-Lifecycle" class="headerlink" title="Window Lifecycle"></a>Window Lifecycle</h3><p>每个 Window 都有一个开始时间和结束时间。它会在属于它的第一个元素流入时创建，在达到结束时间时销毁。举个例子，假如我们定义了一个 基于 processing time 的、创建大小为 10s 的 Tumbling Window 的策略，那么每隔 10s 应用程序都会创建一个新的窗口，并在其达到结束时间后销毁。</p>
+<blockquote>
+<p>Window 的开始时间与应用程序的启动时间无关。假设含有上述 Window 策略的应用程序于 12:00:05 启动 并流入了第一个元素，那么第一个 Window 的开始时间为 12:00:00，结束时间为 12:00:10。</p>
+</blockquote>
+<blockquote>
+<p>若上述 Window 为 Sliding Window，则 第一个 Sliding Window 的开始时间与 触发时间（第一个元素流入的时间）、窗口大小 和 滑动时间 相关，具体计算公式请见： SlidingProcessingTimeWindows 和 SlidingEventTimeWindows 中的 assignWindows(…) 方法。</p>
+</blockquote>
+<h3 id="Keyed-vs-Non-Keyed"><a href="#Keyed-vs-Non-Keyed" class="headerlink" title="Keyed vs Non-Keyed"></a>Keyed vs Non-Keyed</h3><p>在定义 Window 前，首先要确认数据流是 Keyed 还是 Non-Keyed，即数据流是否调用了 keyBy() 方法。</p>
+<p>两者在定义 Window 时存在区别，前者依赖 window(…) 方法，后者依赖 windowAll(…) 方法。</p>
+<p>当然，两者更重要的区别是，Keyed Stream 支持多个窗口的并行计算（ <strong>keyBy()</strong> 可以根据 key 拆分数据流到不同的 Subtask），而 Non-Keyed Stream 只能支持并行度为 1 的单个窗口计算。</p>
+<blockquote>
+<p>使用 windowAll(…) 时，无论上游算子并行度为多少，下游算子的并行度只会为 1。</p>
+</blockquote>
+<h3 id="Window-Assigner"><a href="#Window-Assigner" class="headerlink" title="Window Assigner"></a>Window Assigner</h3><p>Window Assigner 决定了流入的数据被分配到哪个窗口。</p>
+<p>Flink 根据常见的应用场景预设了几个 Window Assigner，分别有：Tumbling Window、Sliding Window、Session Window、Global Window。</p>
+<blockquote>
+<p>当然，用户也可以通过继承 WindowAssigner 实现自定义的窗口装配器。</p>
+</blockquote>
+<p>在上述预设的 Window Assigner 中，除了 Global Window，其他几个都是基于基于元素时间（processing time 和 event time）来决定将元素置入哪个窗口。</p>
+<h4 id="Tumbling-Window"><a href="#Tumbling-Window" class="headerlink" title="Tumbling Window"></a>Tumbling Window</h4><p>Tumbling Window 中文名为滚动窗口，具有 固定大小、不可重叠 的特点。</p>
+<p>假设我们定义了大小为 5s 的 Tumbling Window，那么应用程序会每隔 5s 都会销毁当前 Window 并创建一个新的 Window，新旧 Window 不会交叉重叠，如下图所示：<br><img src="/images/flink1.assets/tumbling.png" srcset="/img/loading.gif" lazyload></p>
+<p>以下为 Tumbling Window 的代码示例：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs Java">DataStream&lt;T&gt; input = ...;<br><br><span class="hljs-comment">// tumbling event-time windows</span><br>input<br>    .keyBy(&lt;key selector&gt;)<br>    .window(TumblingEventTimeWindows.of(Time.seconds(<span class="hljs-number">5</span>)))<br>    .&lt;windowed transformation&gt;(&lt;window function&gt;);<br><br><span class="hljs-comment">// tumbling processing-time windows</span><br>input<br>    .keyBy(&lt;key selector&gt;)<br>    .window(TumblingProcessingTimeWindows.of(Time.seconds(<span class="hljs-number">5</span>)))<br>    .&lt;windowed transformation&gt;(&lt;window function&gt;);<br><br><span class="hljs-comment">// daily tumbling event-time windows offset by -8 hours.</span><br>input<br>    .keyBy(&lt;key selector&gt;)<br>    .window(TumblingEventTimeWindows.of(Time.days(<span class="hljs-number">1</span>), Time.hours(-<span class="hljs-number">8</span>)))<br>    .&lt;windowed transformation&gt;(&lt;window function&gt;);<br></code></pre></td></tr></table></figure>
+
+<h4 id="Sliding-Window"><a href="#Sliding-Window" class="headerlink" title="Sliding Window"></a>Sliding Window</h4><p>Sliding Window 中文名为滑动窗口，具有 固定大小、允许重叠 的特点。</p>
+<p>与 Tumbling Window 不同的是，Sliding Window 除了要配置 window size，还要配置 window slide。这个参数用于设置 Window 的滑动时间（即下一个 Window 要多久后才能创建）。</p>
+<p>假设我们定义了大小为 10s、滑动时间为 5s 的 Sliding Window，那么应用程序每隔 5s 都会创建一个大小为 10s 新的 Window。由于滑动时间小于 Window 的生命周期，新旧 Window 会出现交叉重叠的情况，如下图所示：<br><img src="/images/flink1.assets/sliding.png" srcset="/img/loading.gif" lazyload><br>以下为 Sliding Window 的代码示例：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs Java">DataStream&lt;T&gt; input = ...;<br><br><span class="hljs-comment">// sliding event-time windows</span><br>input<br>    .keyBy(&lt;key selector&gt;)<br>    .window(SlidingEventTimeWindows.of(Time.seconds(<span class="hljs-number">10</span>), Time.seconds(<span class="hljs-number">5</span>)))<br>    .&lt;windowed transformation&gt;(&lt;window function&gt;);<br><br><span class="hljs-comment">// sliding processing-time windows</span><br>input<br>    .keyBy(&lt;key selector&gt;)<br>    .window(SlidingProcessingTimeWindows.of(Time.seconds(<span class="hljs-number">10</span>), Time.seconds(<span class="hljs-number">5</span>)))<br>    .&lt;windowed transformation&gt;(&lt;window function&gt;);<br><br><span class="hljs-comment">// sliding processing-time windows offset by -8 hours</span><br>input<br>    .keyBy(&lt;key selector&gt;)<br>    .window(SlidingProcessingTimeWindows.of(Time.hours(<span class="hljs-number">12</span>), Time.hours(<span class="hljs-number">1</span>), Time.hours(-<span class="hljs-number">8</span>)))<br>    .&lt;windowed transformation&gt;(&lt;window function&gt;);<br></code></pre></td></tr></table></figure>
+
+<h4 id="Session-Window"><a href="#Session-Window" class="headerlink" title="Session Window"></a>Session Window</h4><p>Session Window 中文名为会话窗口。</p>
+<p>会话窗口不会重叠，也不存在一个固定的起止时间。比较特殊的是，它的关闭取决于 session gap 的触发，即允许当前会话未接收到新数据的最大时间间隔，如下图所示：<br><img src="/images/flink1.assets/session.png" srcset="/img/loading.gif" lazyload><br>对于用户来说，session gap 有两种设置方式，分别为静态与动态：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs Java">DataStream&lt;T&gt; input = ...;<br><br><span class="hljs-comment">// event-time session windows with static gap</span><br>input<br>    .keyBy(&lt;key selector&gt;)<br>    .window(EventTimeSessionWindows.withGap(Time.minutes(<span class="hljs-number">10</span>)))<br>    .&lt;windowed transformation&gt;(&lt;window function&gt;);<br>    <br><span class="hljs-comment">// event-time session windows with dynamic gap</span><br>input<br>    .keyBy(&lt;key selector&gt;)<br>    .window(EventTimeSessionWindows.withDynamicGap((element) -&gt; &#123;<br>        <span class="hljs-comment">// determine and return session gap</span><br>    &#125;))<br>    .&lt;windowed transformation&gt;(&lt;window function&gt;);<br><br><span class="hljs-comment">// processing-time session windows with static gap</span><br>input<br>    .keyBy(&lt;key selector&gt;)<br>    .window(ProcessingTimeSessionWindows.withGap(Time.minutes(<span class="hljs-number">10</span>)))<br>    .&lt;windowed transformation&gt;(&lt;window function&gt;);<br>    <br><span class="hljs-comment">// processing-time session windows with dynamic gap</span><br>input<br>    .keyBy(&lt;key selector&gt;)<br>    .window(ProcessingTimeSessionWindows.withDynamicGap((element) -&gt; &#123;<br>        <span class="hljs-comment">// determine and return session gap</span><br>    &#125;))<br>    .&lt;windowed transformation&gt;(&lt;window function&gt;);<br></code></pre></td></tr></table></figure>
+<p>静态与动态的区别在于：</p>
+<ul>
+<li>前者有 EventTimeSessionWindows 和 ProcessingTimeSessionWindows，可直接指定 session gap 大小，以生成 TimeWindow</li>
+<li>后者有 DynamicEventTimeSessionWindows 和 DynamicProcessingTimeSessionWindows，需要实现 SessionWindowTimeGapExtractor 接口从元素中提取 session gap，以生成 TimeWindow<blockquote>
+<p>Session Window 底层创建的窗口实际上也是 TimeWindow，有固定的起止时间，但是，为了实现上述 session gap 的功能，Session Window 提供了一种窗口合并的方案，具体实现原理可参考：<a target="_blank" rel="noopener" href="http://wuchong.me/blog/2016/06/06/flink-internals-session-window%E3%80%82">http://wuchong.me/blog/2016/06/06/flink-internals-session-window。</a></p>
+</blockquote>
+</li>
+</ul>
+<h3 id="Window-Function"><a href="#Window-Function" class="headerlink" title="Window Function"></a>Window Function</h3><p>Window Function 指定了窗口划分后的有界数据的计算逻辑。</p>
+<p>它包含三种类型，分别为 ReduceFunction、AggregateFunction、ProcessWindowFunction。前两者支持增量计算（即来一个算一个），执行效率较高；后者会将窗口中的数据缓存起来，待满足条件时统一计算，相较而言执行效率较差、损耗资源较多，但胜在灵活性更强。</p>
+<p>下面，我们将通过示例详细了解这些 Window Function。</p>
+<h4 id="ReduceFunction"><a href="#ReduceFunction" class="headerlink" title="ReduceFunction"></a>ReduceFunction</h4><p>ReduceFunction 可以将输入流中 前后两个元素 进行 合并运算 后输出 类型相同 的新元素。</p>
+<p>通常，用户可以通过 ReduceFunction 来对窗口中的元素做增量聚合：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs Java">DataStream&lt;Tuple2&lt;String, Long&gt;&gt; input = ...;<br><br>input<br>    .keyBy(&lt;key selector&gt;)<br>    .window(&lt;window assigner&gt;)<br>    .reduce(<span class="hljs-keyword">new</span> <span class="hljs-title class_">ReduceFunction</span>&lt;Tuple2&lt;String, Long&gt;&gt;() &#123;<br>        <span class="hljs-keyword">public</span> Tuple2&lt;String, Long&gt; <span class="hljs-title function_">reduce</span><span class="hljs-params">(Tuple2&lt;String, Long&gt; v1, Tuple2&lt;String, Long&gt; v2)</span> &#123;<br>            <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Tuple2</span>&lt;&gt;(v1.f0, v1.f1 + v2.f1);<br>        &#125;<br>    &#125;);<br></code></pre></td></tr></table></figure>
+
+<h4 id="AggregateFunction"><a href="#AggregateFunction" class="headerlink" title="AggregateFunction"></a>AggregateFunction</h4><p>同 ReduceFunction，AggregateFunction 也支持对输入元素进行增量聚合，但是它比 ReduceFunction 更加通用和全面。它有三个参数，分别是：</p>
+<ul>
+<li>输入类型（IN）：输入流中的元素类型</li>
+<li>累加器类型（ACC）：可对输入的数据进行累加</li>
+<li>输出类型（OUT）：输出流中的元素类型</li>
+<li></li>
+</ul>
+<p>AggregateFunction 接口中定义了以下 4 个方法：</p>
+<table>
+<thead>
+<tr>
+<th>方法名称</th>
+<th>返回类型</th>
+<th>方法说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>createAccumulator()</td>
+<td>ACC</td>
+<td>创建初始累加器</td>
+</tr>
+<tr>
+<td>add(IN var1, ACC var2)</td>
+<td>ACC</td>
+<td>累加输入元素到累加器</td>
+</tr>
+<tr>
+<td>getResult(ACC var1)</td>
+<td>OUT</td>
+<td>从累加器提取输出元素</td>
+</tr>
+<tr>
+<td>merge(ACC var1, ACC var2)</td>
+<td>ACC</td>
+<td>合并累加器</td>
+</tr>
+</tbody></table>
+<p>我们可以如下定义和使用 AggregateFunction：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><code class="hljs Java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">AverageAggregateFunction</span><br>        <span class="hljs-keyword">implements</span> <span class="hljs-title class_">AggregateFunction</span>&lt;Tuple2&lt;String, Integer&gt;, Tuple2&lt;Long, Long&gt;, Double&gt; &#123;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> Tuple2&lt;Long, Long&gt; <span class="hljs-title function_">createAccumulator</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-keyword">return</span> Tuple2.of(<span class="hljs-number">0L</span>, <span class="hljs-number">0L</span>);<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> Tuple2&lt;Long, Long&gt; <span class="hljs-title function_">add</span><span class="hljs-params">(Tuple2&lt;String, Integer&gt; value, Tuple2&lt;Long, Long&gt; accumulator)</span> &#123;<br>        <span class="hljs-keyword">return</span> Tuple2.of(accumulator.f0 + value.f1, accumulator.f1 + <span class="hljs-number">1</span>);<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> Double <span class="hljs-title function_">getResult</span><span class="hljs-params">(Tuple2&lt;Long, Long&gt; accumulator)</span> &#123;<br>        <span class="hljs-keyword">return</span> ((<span class="hljs-type">double</span>) accumulator.f0) / accumulator.f1;<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> Tuple2&lt;Long, Long&gt; <span class="hljs-title function_">merge</span><span class="hljs-params">(Tuple2&lt;Long, Long&gt; acc1, Tuple2&lt;Long, Long&gt; acc2)</span> &#123;<br>        <span class="hljs-keyword">return</span> Tuple2.of(acc1.f0 + acc2.f0, acc1.f1 + acc2.f1);<br>    &#125;<br>&#125;<br><br>DataStreamSource&lt;String&gt; source = env.socketTextStream(<span class="hljs-string">&quot;192.168.117.128&quot;</span>, <span class="hljs-number">9999</span>);<br><br>source.flatMap((String value, Collector&lt;Tuple2&lt;String, Integer&gt;&gt; collector) -&gt; &#123;<br>    String[] words = value.split(<span class="hljs-string">&quot;,&quot;</span>);<br>    collector.collect(Tuple2.of(words[<span class="hljs-number">0</span>], Integer.valueOf(words[<span class="hljs-number">1</span>])));<br>&#125;).returns(Types.TUPLE(Types.STRING, Types.INT))<br>    .keyBy(value -&gt; value.f0)<br>    .window(TumblingProcessingTimeWindows.of(Time.seconds(<span class="hljs-number">20</span>)))<br>    .aggregate(<span class="hljs-keyword">new</span> <span class="hljs-title class_">AverageAggregateFunction</span>())<br>    .print();<br></code></pre></td></tr></table></figure>
+<p>通过该 AggregateFunction，用户可以计算各 key 值在窗口范围内对应的平均数。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Flink/" class="category-chain-item">Flink</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Flink Window</div>
+      <div>https://swallowgo.github.io/2026/07/28/flink4/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>Author</div>
+          <div>QINGDONG Zeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>Posted on</div>
+          <div>July 28, 2026</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>Licensed under</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - Attribution">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/07/28/flink3/" title="Flink DataStream API">
+                        <span class="hidden-mobile">Flink DataStream API</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>Table of Contents</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">Keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>DD</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>JOJO</span></a> <br> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">Blog works best with JavaScript enabled</div>
+  </noscript>
+</body>
+</html>
