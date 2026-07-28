@@ -19,26 +19,26 @@
   <meta name="author" content="QINGDONG Zeng">
   <meta name="keywords" content="">
   
-    <meta name="description" content="什么是Flink?Apache Flink是一个分布式计算框架，可以对有界和无界的数据流进行高效的处理。  有界数据：即批数据（离线数据），具有已定义的起止位置，属于静态数据集。 无界数据：即流式数据（实时数据），无已定义的结束位置，属于动态数据集。  Flink 的特性在官方的介绍中，Flink具有以下优势：  Deploy Applications Anywhere：Flink 集成了所有常见">
+    <meta name="description" content="Flink的工作流程刨析Flink运行时由两种类型的进程组成：一个JobManager和一个或者多个TaskManager。 如图所示，一个Flink应用程序从提交到完成的流程大致可以表述为：  Client提取应用程序中的JobGraph，下载依赖包，并将他发给JobManager JobManager接收到JobGraph后，会将其转换为ExecutionGraph，然后向集群申请资源并将Ex">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Flink概论">
-<meta property="og:url" content="https://swallowgo.github.io/2026/07/27/flink1/index.html">
+<meta property="og:title" content="Flink工作流程">
+<meta property="og:url" content="https://swallowgo.github.io/2026/07/28/flink2/index.html">
 <meta property="og:site_name" content="Technology After Sunset">
-<meta property="og:description" content="什么是Flink?Apache Flink是一个分布式计算框架，可以对有界和无界的数据流进行高效的处理。  有界数据：即批数据（离线数据），具有已定义的起止位置，属于静态数据集。 无界数据：即流式数据（实时数据），无已定义的结束位置，属于动态数据集。  Flink 的特性在官方的介绍中，Flink具有以下优势：  Deploy Applications Anywhere：Flink 集成了所有常见">
+<meta property="og:description" content="Flink的工作流程刨析Flink运行时由两种类型的进程组成：一个JobManager和一个或者多个TaskManager。 如图所示，一个Flink应用程序从提交到完成的流程大致可以表述为：  Client提取应用程序中的JobGraph，下载依赖包，并将他发给JobManager JobManager接收到JobGraph后，会将其转换为ExecutionGraph，然后向集群申请资源并将Ex">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="https://swallowgo.github.io/images/flink1.assets/streamdata.png">
-<meta property="og:image" content="https://swallowgo.github.io/images/flink1.assets/advantage.png">
-<meta property="og:image" content="https://swallowgo.github.io/images/flink1.assets/architecture.png">
-<meta property="og:image" content="https://swallowgo.github.io/images/flink1.assets/deploy-mode.png">
-<meta property="article:published_time" content="2026-07-27T06:48:05.000Z">
-<meta property="article:modified_time" content="2026-07-27T09:49:12.638Z">
+<meta property="og:image" content="https://swallowgo.github.io/images/flink1.assets/anatomy.png">
+<meta property="og:image" content="https://swallowgo.github.io/images/flink1.assets/task&subtask.png">
+<meta property="og:image" content="https://swallowgo.github.io/images/flink1.assets/subtask&taskslot.png">
+<meta property="og:image" content="https://swallowgo.github.io/images/flink1.assets/subtask&taskslot2.png">
+<meta property="article:published_time" content="2026-07-28T01:37:38.000Z">
+<meta property="article:modified_time" content="2026-07-28T02:56:01.289Z">
 <meta property="article:author" content="QINGDONG Zeng">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://swallowgo.github.io/images/flink1.assets/streamdata.png">
+<meta name="twitter:image" content="https://swallowgo.github.io/images/flink1.assets/anatomy.png">
   
   
   
-  <title>Flink概论 - Technology After Sunset</title>
+  <title>Flink工作流程 - Technology After Sunset</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -204,7 +204,7 @@
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="Flink概论"></span>
+            <span id="subtitle" data-typed-text="Flink工作流程"></span>
           
         </div>
 
@@ -215,8 +215,8 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2026-07-27 14:48" pubdate>
-          July 27, 2026 pm
+        <time datetime="2026-07-28 09:37" pubdate>
+          July 28, 2026 am
         </time>
       </span>
     
@@ -275,239 +275,60 @@
       <div class="container nopadding-x-md" id="board-ctn">
         <div id="board">
           <article class="post-content mx-auto">
-            <h1 id="seo-header">Flink概论</h1>
+            <h1 id="seo-header">Flink工作流程</h1>
             
             
               <div class="markdown-body">
                 
-                <h1 id="什么是Flink"><a href="#什么是Flink" class="headerlink" title="什么是Flink?"></a>什么是Flink?</h1><p>Apache Flink是一个分布式计算框架，可以对有界和无界的数据流进行高效的处理。</p>
+                <h1 id="Flink的工作流程刨析"><a href="#Flink的工作流程刨析" class="headerlink" title="Flink的工作流程刨析"></a>Flink的工作流程刨析</h1><p>Flink运行时由两种类型的进程组成：一个JobManager和一个或者多个TaskManager。<br><img src="/images/flink1.assets/anatomy.png" srcset="/img/loading.gif" lazyload></p>
+<p>如图所示，一个Flink应用程序从提交到完成的流程大致可以表述为：</p>
+<ol>
+<li>Client提取应用程序中的JobGraph，下载依赖包，并将他发给JobManager</li>
+<li>JobManager接收到JobGraph后，会将其转换为ExecutionGraph，然后向集群申请资源并将ExecutionGraph分发给对应的TaskManager</li>
+<li>TaskManager接收ExecutionGraph后，会将作业流进行拆分并交由Task Slot处理</li>
+<li>Task Slot完成计算后，由Sink任务实现结果的输出</li>
+</ol>
+<h1 id="Flink核心组件"><a href="#Flink核心组件" class="headerlink" title="Flink核心组件"></a>Flink核心组件</h1><h3 id="JobManager"><a href="#JobManager" class="headerlink" title="JobManager"></a>JobManager</h3><p>Flink 的架构采用的也是常见的 Master - Slave 架构。</p>
+<p>在 Flink 中，JobManager 的地位即为 Master，与 HDFS 中的 NameNode、HBase 中的 Master 等处于同一级别。它负责分布式环境下 Flink 作业的协调与执行，例如：决定何时调度下一个 task（或一组 task）、对完成的 task 或执行失败做出反应、协调 checkpoint 并且协调从失败中恢复等等。</p>
+<p>Job Manager 由三个不同的组件组成：ResourceManager、Dispatcher、JobMaster。</p>
+<h4 id="ResourceManager"><a href="#ResourceManager" class="headerlink" title="ResourceManager"></a>ResourceManager</h4><p>ResourceManager 负责 Flink 集群中的资源提供、回收与分配。</p>
+<p>它是 Task Slot （Flink 集群中资源调度的单位，位于 TaskManager 中）的管理者。当 ResourceManager 接收来自 JobManager 的资源请求时，会将存在空闲 slot 的 TaskManager 分配给 JobManager 执行任务。</p>
+<h4 id="Dispatcher"><a href="#Dispatcher" class="headerlink" title="Dispatcher"></a>Dispatcher</h4><p>Dispatcher 提供了一个 REST 接口，用来提交 Flink 应用程序，并为每个提交的作业启动一个新的 JobMaster。此外，它还会启动 Flink Web UI 用来显示作业执行信息。</p>
+<h4 id="JobMaster"><a href="#JobMaster" class="headerlink" title="JobMaster"></a>JobMaster</h4><p>JobMaster 负责管理单个 JobGraph 的执行。Flink 集群中可以同时运行多个作业，每个作业都有自己的 JobMaster。</p>
+<h3 id="TaskManager"><a href="#TaskManager" class="headerlink" title="TaskManager"></a>TaskManager</h3><p>TaskManager（也称为 worker）负责实际子任务（Subtask）的执行，并且缓存和交换数据流。</p>
+<p>每个 TaskManager 都拥有一定数量的 Task Slot，其数量也代表着 TaskManager 的并发能力。当 TaskManager 启动后，会将其所拥有的 Task Slot 注册到 ResourceManager 上，由 ResourceManager 进行统一管理。</p>
+<h1 id="任务与子任务-Task-Subtask"><a href="#任务与子任务-Task-Subtask" class="headerlink" title="任务与子任务(Task&amp;Subtask)"></a>任务与子任务(Task&amp;Subtask)</h1><p>在TaskManager中有提到实际执行的是Subtask而不是Task，在这里将对两者进行比较说明。</p>
+<p>在执行分布式计算式，Flink可以将算子(operator)链接到一起，这样一个算子链被称作一个Task。之所以这样，是为了减少线程间切换和缓冲而导致的开销，在降低延迟的同时可以提高整体的吞吐量。</p>
+<blockquote>
+<p>不是所有的算子都可以被链接，例如 keyBy 等操作会导致网络 shuffle 和重分区，因此其就不能被链接，只能被算作单独的 Task。</p>
+</blockquote>
+<p>简单来说，一个Task就是一个可以链接的最小的算子链(Operator Chains)。但是需要注意的是，Task更像是一个概念性的任务，而不是真实存在的任务。</p>
+<p>如下图，假设我们的作业有source、map、keyBy、sink等算子，那么在概念上，我们可以将其切分成3个算子链(即3个Task)。单这是概念上的，在实际流程中，我们的算子链会根据并行度形成一个或者多个的Subtask(A subtask is one parallel slice of a task)。<br><img src="/images/flink1.assets/task&subtask.png" srcset="/img/loading.gif" lazyload></p>
+<p>为方便我们更好地理解 Task 和 Subtask 的区别，官方文档中的示例图特意将图例中的并行度设置为 2。很显然，在并行度为 2 的情况下，我们的作业被拆分成了 2 个 source&amp;map 子任务、2 个 keyBy 子任务、1 个 sink 子任务，总计有 5 个 Subtask。这 5 个 Subtask，是实际提交给 Task Slots 执行计算的任务，所以我们说 Task 是概念上的任务而 Subtask 是实际存在的任务。</p>
+<p>综上，一个 Subtask 就是一个实际提交给 Task Slots 的可以链接的最小的算子链 (Operator Chains)，且每个 SubTask 都是一个单独的线程。</p>
+<h1 id="Task-Slot"><a href="#Task-Slot" class="headerlink" title="Task Slot"></a>Task Slot</h1><p>顾名思义，我们可以将Task Slot理解为TaskManager中用于执行Subtask的槽位，每个TaskManager可以拥有1个以上的Task Slot。</p>
+<h3 id="设计优势"><a href="#设计优势" class="headerlink" title="设计优势"></a>设计优势</h3><h4 id="资源隔离"><a href="#资源隔离" class="headerlink" title="资源隔离"></a>资源隔离</h4><p>Task Slot 是TaskManager中资源的固定子集。例如，具有3个slot的TaskManager，会将其托管内存的1&#x2F;3用于每个slot，这意味着分配到某个slot上的Subtask不会与其他槽位的Subtask竞争托管内容。</p>
+<blockquote>
+<p>这里没有CPU隔离，Task Slot仅分离TaskManager的托管内存。</p>
+</blockquote>
+<h4 id="减少开销"><a href="#减少开销" class="headerlink" title="减少开销"></a>减少开销</h4><p>假设一个TaskManager开启了多个Task Slot，那么就意味着多个Subtask共享同一个JVM进程。在这个进程中，所有的Subtask共享TCP链接和心跳信息，此外还可以共享数据集和数据结构，从而减少每一个Subtask的开销。</p>
+<p>我们可以结合官网的示例图，来看看SubTask和Task Slot的关系究竟是怎么样的。<br><img src="/images/flink1.assets/subtask&taskslot.png" srcset="/img/loading.gif" lazyload></p>
+<p>假设现在有两个TaskManager，且每一个TaskManager有3个Task Slot，那么我们在Task&amp;Subtask部分中拆出5个Subtask将分布在5个不同的Slot中。</p>
+<h3 id="Slot-Share"><a href="#Slot-Share" class="headerlink" title="Slot Share"></a>Slot Share</h3><p>在上面的示例图中，我们可以看到有一个Task Slot处于空闲状态，这里显然会造成资源的浪费。假如每个Task Slot只能执行一个Subtask，那么为了使这个空闲的Slot得以利用，我怕们在进行Flink应用程序开发时就不得不分析并行度和集群Task Slot的关系，这显然会急剧增加开发的复杂度和不确定性。</p>
+<p>因此，默认情况下Flink支持了槽位共享，即允许Subtask共享Task Slot，即使他们时不同的Task的Subtask，只要是来自<strong>同一应用程序</strong>即可。</p>
+<p>有了槽位共享的支持，我们将实例程序的并行度设置为6，可以看到Subtask在Task Slot的分布确实带来了优势：</p>
+<p><img src="/images/flink1.assets/subtask&taskslot2.png" srcset="/img/loading.gif" lazyload></p>
+<h4 id="优势一：获得了更好的资源利用和资源分配"><a href="#优势一：获得了更好的资源利用和资源分配" class="headerlink" title="优势一：获得了更好的资源利用和资源分配"></a>优势一：获得了更好的资源利用和资源分配</h4><p>一方面，TaskManager 得到了尽可能的利用；另一方面，避免非密集 Subtask（如 source&amp;map）占用和密集型 Subtask（如 window） 一样多的资源。</p>
+<h4 id="优势二：降低并行度设置的复杂度。"><a href="#优势二：降低并行度设置的复杂度。" class="headerlink" title="优势二：降低并行度设置的复杂度。"></a>优势二：降低并行度设置的复杂度。</h4><p>Flink 应用程序中的最大并行度和 Flink 集群的 Task Slot 数量恰好一样，无需开发人员去计算程序总共包含多少个 Subtask。</p>
+<blockquote>
+<p>并行度尽量不要大于 Task Slot 数量，否则容易导致集群没有足够的可分配资源。</p>
+</blockquote>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>我们总结一下 TaskManager、Task Slot、Subtask 等概念的对照关系，来加深我们对这些概念的理解：</p>
 <ul>
-<li>有界数据：即批数据（离线数据），具有已定义的起止位置，属于静态数据集。</li>
-<li>无界数据：即流式数据（实时数据），无已定义的结束位置，属于动态数据集。<br><img src="/images/flink1.assets/streamdata.png" srcset="/img/loading.gif" lazyload></li>
+<li>1 个 TaskManager 可以包含 N（N &gt; 1） 个 Task Slot</li>
+<li>1 个 Task Slot 可以包含 N（N &gt; 1） 个 Subtask</li>
+<li>1 个 Subtask 对应 1 个线程</li>
 </ul>
-<h1 id="Flink-的特性"><a href="#Flink-的特性" class="headerlink" title="Flink 的特性"></a>Flink 的特性</h1><p>在官方的介绍中，Flink具有以下优势：</p>
-<ul>
-<li>Deploy Applications Anywhere：Flink 集成了所有常见的集群资源管理器，例如 Hadoop YARN、Apache Mesos 和 Kubernetes，也可以作为独立集群运行</li>
-<li>Run Applications at any Scale：Flink 的设计目标就是为了支撑任意规模、有状态流应用程序的运行，应用程序被并行化为分布式集群中的数千个任务，因此，可以利用几乎无限量的 CPU、主内存、磁盘和网络 IO</li>
-<li>Leverage In-Memory Performance：在 Flink 中，任务状态始终保存在内存中，因此，任务通过访问本地的状态（通常在内存中）来执行所有计算，从而产生非常低的处理延迟<br><img src="/images/flink1.assets/advantage.png" srcset="/img/loading.gif" lazyload></li>
-</ul>
-<h3 id="总结Flink具有的特性如下："><a href="#总结Flink具有的特性如下：" class="headerlink" title="总结Flink具有的特性如下："></a>总结Flink具有的特性如下：</h3><ul>
-<li>支持Scala和Java API</li>
-<li>支持流批一体</li>
-<li>同时支持高吞吐、低延迟、高性能</li>
-<li>支持事件时间和处理时间语义，基于事件时间语义能够针对无序事件提供精确、一致的结果；基于处理时间语义能够用在具有极低延迟需求的应用中</li>
-<li>支持不同时间语义下的窗口编程</li>
-<li>支持有状态计算</li>
-<li>支持具有 Backpressure 功能的持续流模型</li>
-<li>提供精确一次（exactly once）的状态一致性保障</li>
-<li>Flink 在 JVM 内部实现了自己的内存管理</li>
-<li>基于轻量级的分布式快照 Checkpoint 的容错</li>
-<li>支持 Savepoint 机制，手工触发，适用于升级</li>
-<li>支持高可用性配置（无单点失效），与 k8s、Yarn、Apache Mesos 紧密集成</li>
-<li>提供常见存储系统的连接器：Kafka，Elasticsearch 等</li>
-<li>提供详细、可自由定制的系统及应用指标（metrics）集合，用于提前定位和响应问题</li>
-</ul>
-<h1 id="与其他框架比较（看起来就是全面"><a href="#与其他框架比较（看起来就是全面" class="headerlink" title="与其他框架比较（看起来就是全面"></a>与其他框架比较（看起来就是全面</h1><table>
-<thead>
-<tr>
-<th>指标&#x2F;框架</th>
-<th>Flink</th>
-<th>Spark</th>
-<th>Storm</th>
-<th>Storm-Trident</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>处理模型</td>
-<td>Naive</td>
-<td>Micro-Batch</td>
-<td>Native</td>
-<td>Micro-Batch</td>
-</tr>
-<tr>
-<td>处理语义</td>
-<td>Exactly-Once</td>
-<td>Exactly-Once</td>
-<td>At-Least-Once</td>
-<td>Exactly-Once</td>
-</tr>
-<tr>
-<td>容错</td>
-<td>Checkpoint</td>
-<td>Checkpoint</td>
-<td>Ack</td>
-<td>Ack</td>
-</tr>
-<tr>
-<td>吞吐量</td>
-<td>High</td>
-<td>Micro-Batch</td>
-<td>Low</td>
-<td>Medium</td>
-</tr>
-<tr>
-<td>延迟</td>
-<td>Low</td>
-<td>High</td>
-<td>High</td>
-<td>Very Low</td>
-</tr>
-</tbody></table>
-<h1 id="Flink的架构"><a href="#Flink的架构" class="headerlink" title="Flink的架构"></a>Flink的架构</h1><p>Flink的架构与大数据中常见的分布式架构（HDFS、Spark等）相似，都遵循主从模式。<br>这是官方提供的Flink架构图：<br><img src="/images/flink1.assets/architecture.png" srcset="/img/loading.gif" lazyload alt="Flink架构"><br>其中蓝色部分是Flink的核心组件：</p>
-<table>
-<thead>
-<tr>
-<th>组件名</th>
-<th>组件职责</th>
-<th>实现</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>Flink Client</td>
-<td>Flink客户端，提交作业到JobManager</td>
-<td>CLI、REST Endpoint等</td>
-</tr>
-<tr>
-<td>JobManager</td>
-<td>Flink的中心协调组件，包括Scheduler&#x2F;CheckpointCoordinator&#x2F;ResourceManager</td>
-<td>Standalone、Kubernetes、YARN、Mesos</td>
-</tr>
-<tr>
-<td>TaskManager</td>
-<td>执行Flink作业的进程,管理TaskSlot</td>
-<td></td>
-</tr>
-<tr>
-<td>TaskSLot</td>
-<td>TaskManager中的资源单位，每个Slot执行一个并行子任务</td>
-<td></td>
-</tr>
-<tr>
-<td>橙色部分是外部支撑组件：</td>
-<td></td>
-<td></td>
-</tr>
-</tbody></table>
-<table>
-<thead>
-<tr>
-<th>组件名</th>
-<th>组件职责</th>
-<th>实现</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>High Availability Service Provider</td>
-<td>高可用性服务提供商</td>
-<td>Zookeeper、Kubernetes HA</td>
-</tr>
-<tr>
-<td>File Storage and Persistency</td>
-<td>外部文件系统</td>
-<td>HDFS、Alluxio、阿里云 OSS</td>
-</tr>
-<tr>
-<td>Resource Provider</td>
-<td>资源提供者</td>
-<td>Yarn、Mesos、Kubernetes</td>
-</tr>
-<tr>
-<td>Metrics Storage</td>
-<td>Flink 指标模块</td>
-<td>JMX、InfluxDB、Prometheus</td>
-</tr>
-</tbody></table>
-<h1 id="Flink-概念"><a href="#Flink-概念" class="headerlink" title="Flink 概念"></a>Flink 概念</h1><table>
-<thead>
-<tr>
-<th>概念</th>
-<th>说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>Task</td>
-<td>一个阶段多个功能相同的subTask的集合，类似Spark中的TaskSet</td>
-</tr>
-<tr>
-<td>SubTask</td>
-<td>Flink中任务最小执行单元，是一个Java类的实例。这个Java类中有属性和方法，完成具体的计算逻辑</td>
-</tr>
-<tr>
-<td>Slot</td>
-<td>Flink中计算资源进行隔离的单元，一个Slot中可以运行多个subTask，但是这些subTask必须是来自同一个Application的不同阶段的subTask</td>
-</tr>
-<tr>
-<td>State</td>
-<td>Flink在运行过程中计算的中间结果</td>
-</tr>
-<tr>
-<td>Source</td>
-<td>Flink作业的数据源，可以是本地文件、Socket、Kafka等</td>
-</tr>
-<tr>
-<td>Transformation</td>
-<td>负责数据处理的算子，包括map、fliter、reduce、flatMap</td>
-</tr>
-<tr>
-<td>Sink</td>
-<td>Flink作业的数据存放点，可以是MySQL、Kafka等</td>
-</tr>
-</tbody></table>
-<h1 id="Flink-的部署模式"><a href="#Flink-的部署模式" class="headerlink" title="Flink 的部署模式"></a>Flink 的部署模式</h1><p>在Flink中，可以通过以下三种方式执行应用程序：</p>
-<ul>
-<li><p>Session Mode：</p>
-<ul>
-<li>Session Mode是预分配资源的，也就是提前根据指定的资源参数初始化一个Flink集群，拥有固定数量的JobManager和TaskManager。这样做的好处是提交的作业可以直接执行，无需花费额外的开销去启动集群。相应的，Session Mode的弊端业很明显。如果TaskManager因某个作业崩溃了，那么该TaskManager上运行的所有作业都会收到故障的影响。除了对香港作业产生影响外，这还意味着潜在得大规模恢复过程。此外，最有一个集群业意味着JobManager得负载大大增加，具备一定风险。</li>
-</ul>
-</li>
-<li><p>Per-Job Mode</p>
-<ul>
-<li>Per-Job Mode可以基于资源协调框架（YARN、k8s）为每一个提交得作业启动专属得Flink集群。这提供了更好得资源隔离性保证，当作业被完成后，集群将被关闭，所有附属得资源也会被清除。这样得好处是一个作业的TaskManager失败不会影响到其他作业的运行，且JobManager的负载时分开的，不存在单点问题。当然，缺点业很明显，为每一个作业启动一个集群会消耗更多集群资源，同时也会导致一定程度的延时。</li>
-</ul>
-</li>
-<li><p>Application Mode</p>
-<ul>
-<li>在以上两种模式下，应用程序的main方法都是在客户端执行的，此过程包括在本地下载应用程序依赖项、提取Flink运行时可以理解的应用程序表示形式（即JobGraph）、将依赖项和JobGraph传输到Flink集群。这会导致客户端需要消耗非常多的资源，因为它可能需要大量的网络带宽来下载依赖项并将二进制文件传输到集群，并且需要CPU资源来执行main方法。当有多用户共享客户端时，这个问题将更加明显。</li>
-<li>为了解决上述问题，Application Mode在Per-Job Mode的基础上，将应用程序的main方法转移到了JobManager上执行。通过这种体系结构，Application Mode提供了与Per-Job相同的资源隔离和负载平衡保证，同时也解决了客户端负载过多的问题。</li>
-<li>与Per-Job Mode相比，Application Mode允许提交包含多个作业的应用程序。作业的执行顺序不受部署模式的影响，当受启动该作业调用位置的影响。使用execute会导致下一个作业的执行被推迟到该作业完成为止，使用非阻塞的executeAsync()可以时下一个作业在此作业完成之前就开始。</li>
-</ul>
-</li>
-<li><p>综合上述内容，Flink的几种部署模式的异同点可以归纳为下表：</p>
-<table>
-<thead>
-<tr>
-<th>部署模式</th>
-<th>集群启动数</th>
-<th>资源隔离</th>
-<th>客户端压力</th>
-<th>延时性</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>Session Mode</td>
-<td>1</td>
-<td>❌</td>
-<td>高</td>
-<td>低</td>
-</tr>
-<tr>
-<td>Per-Job Mode</td>
-<td>N</td>
-<td>✅</td>
-<td>高</td>
-<td>低</td>
-</tr>
-<tr>
-<td>Application Mode</td>
-<td>N</td>
-<td>✅</td>
-<td>低</td>
-<td>高</td>
-</tr>
-</tbody></table>
-</li>
-</ul>
-<p><img src="/images/flink1.assets/deploy-mode.png" srcset="/img/loading.gif" lazyload alt="Flink部署模式"></p>
 
                 
               </div>
@@ -546,8 +367,8 @@
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>Flink概论</div>
-      <div>https://swallowgo.github.io/2026/07/27/flink1/</div>
+      <div>Flink工作流程</div>
+      <div>https://swallowgo.github.io/2026/07/28/flink2/</div>
     </div>
     <div class="license-meta">
       
@@ -559,7 +380,7 @@
       
         <div class="license-meta-item license-meta-date">
           <div>Posted on</div>
-          <div>July 27, 2026</div>
+          <div>July 28, 2026</div>
         </div>
       
       
@@ -591,18 +412,12 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2026/07/28/flink2/" title="Flink工作流程">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">Flink工作流程</span>
-                        <span class="visible-mobile">Previous</span>
-                      </a>
-                    
                   </article>
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2026/07/02/Reactor/" title="Reactor">
-                        <span class="hidden-mobile">Reactor</span>
+                      <a href="/2026/07/27/flink1/" title="Flink概论">
+                        <span class="hidden-mobile">Flink概论</span>
                         <span class="visible-mobile">Next</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
