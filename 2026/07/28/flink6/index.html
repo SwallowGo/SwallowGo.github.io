@@ -1,0 +1,754 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="QINGDONG Zeng">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="什么是StateState 是记录 有状态算子任务 计算结果的载体，支持中间结果的读取、保存、更新与清除。在 Flink 中，一个带有 State 的流处理过程如下图所示： 作为存储各种不同结构计算结果的 State，也存在着多种类型。根据作用域的不同，可将 State 分为 Operator State 和 Keyed State. Operator StateOperator State 又称">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Flink的状态管理">
+<meta property="og:url" content="https://swallowgo.github.io/2026/07/28/flink6/index.html">
+<meta property="og:site_name" content="Technology After Sunset">
+<meta property="og:description" content="什么是StateState 是记录 有状态算子任务 计算结果的载体，支持中间结果的读取、保存、更新与清除。在 Flink 中，一个带有 State 的流处理过程如下图所示： 作为存储各种不同结构计算结果的 State，也存在着多种类型。根据作用域的不同，可将 State 分为 Operator State 和 Keyed State. Operator StateOperator State 又称">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://swallowgo.github.io/images/flink1.assets/state1.png">
+<meta property="og:image" content="https://swallowgo.github.io/images/flink1.assets/state2.png">
+<meta property="og:image" content="https://swallowgo.github.io/images/flink1.assets/keyedstate.png">
+<meta property="og:image" content="https://swallowgo.github.io/images/flink1.assets/statebackendembedded.png">
+<meta property="article:published_time" content="2026-07-28T09:07:15.000Z">
+<meta property="article:modified_time" content="2026-07-29T02:08:45.529Z">
+<meta property="article:author" content="QINGDONG Zeng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://swallowgo.github.io/images/flink1.assets/state1.png">
+  
+  
+  
+  <title>Flink的状态管理 - Technology After Sunset</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"swallowgo.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>SwallowGo&#39;s Blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>Home</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>Archives</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>Categories</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>Tags</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>About</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Flink的状态管理"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-07-28 17:07" pubdate>
+          July 28, 2026 pm
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.5k words
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          21 mins
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Flink的状态管理</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="什么是State"><a href="#什么是State" class="headerlink" title="什么是State"></a>什么是State</h1><p>State 是记录 有状态算子任务 计算结果的载体，支持中间结果的读取、保存、更新与清除。<br>在 Flink 中，一个带有 State 的流处理过程如下图所示：<br><img src="/images/flink1.assets/state1.png" srcset="/img/loading.gif" lazyload></p>
+<p>作为存储各种不同结构计算结果的 State，也存在着多种类型。根据作用域的不同，可将 State 分为 <strong>Operator State</strong> 和 <strong>Keyed State</strong>.</p>
+<h1 id="Operator-State"><a href="#Operator-State" class="headerlink" title="Operator State"></a>Operator State</h1><p>Operator State 又称 Non-Keyed State，是一种作用在算子任务上的状态，其流处理示意图如下：<br><img src="/images/flink1.assets/state2.png" srcset="/img/loading.gif" lazyload><br>它具有以下特点：</p>
+<ul>
+<li>作用范围限定于算子任务（Task）</li>
+<li>对归属于 <strong>相同 Task Slot、相同算子任务</strong> 的子任务（Subtask），其状态是可以共享的<br>Operator State 包含 <strong>List State、Union List State、Broadcast State</strong> 三种类型。</li>
+</ul>
+<h3 id="List-State"><a href="#List-State" class="headerlink" title="List State"></a>List State</h3><p>List State 中文名为列表状态，以 List 存储状态信息。我们可以通过 add(…) 或者 addAll(…) 将状态信息添加到列表，也可以通过迭代器获取列表中的状态信息。</p>
+<h3 id="Union-List-State"><a href="#Union-List-State" class="headerlink" title="Union List State"></a>Union List State</h3><p>Union List State 中文名为联合列表状态，其底层数据结构也是 List。其与 List State 的区别在于：当从检查点恢复时，每个 Subtask 可以拿到之前所有算子任务上的状态信息。</p>
+<h3 id="Broadcast-State"><a href="#Broadcast-State" class="headerlink" title="Broadcast State"></a>Broadcast State</h3><p>Broadcast State 中文名为广播状态，是一种特殊的状态，会被广播到下游所有子任务（Subtask），其底层数据结构基于 Map 实现。</p>
+<blockquote>
+<p>实际应用中，使用到 Operator State 的场景较少。</p>
+</blockquote>
+<h3 id="CheckpointedFunction"><a href="#CheckpointedFunction" class="headerlink" title="CheckpointedFunction"></a>CheckpointedFunction</h3><p>我们可以在自定义的 Function 中实现 CheckpointedFunction 接口，以此来使用 Operator State。</p>
+<p>CheckpointedFunction 接口声明了两个方法：</p>
+<ul>
+<li>initializeState：初始化 State，当算子任务初始化时调用</li>
+<li>snapshotState：生成 State 快照，当 checkpoint 触发时调用</li>
+</ul>
+<p>为加强理解，这里记录基于 CheckpointedFunction 实现 Stateful Source Function 和 Stateful Sink Function。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><code class="hljs Java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">StatefulSourceFunction</span> <span class="hljs-keyword">extends</span> <span class="hljs-title class_">RichParallelSourceFunction</span>&lt;String&gt; <span class="hljs-keyword">implements</span> <span class="hljs-title class_">CheckpointedFunction</span> &#123;<br><br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-type">Logger</span> <span class="hljs-variable">LOGGER</span> <span class="hljs-operator">=</span> LoggerFactory.getLogger(StatefulSourceFunction.class);<br><br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-type">Random</span> <span class="hljs-variable">RANDOM</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Random</span>();<br><br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">volatile</span> <span class="hljs-type">boolean</span> <span class="hljs-variable">isRunning</span> <span class="hljs-operator">=</span> <span class="hljs-literal">true</span>;<br><br>    <span class="hljs-comment">// 记录消费位移</span><br>    <span class="hljs-keyword">private</span> <span class="hljs-type">Long</span> <span class="hljs-variable">offset</span> <span class="hljs-operator">=</span> <span class="hljs-number">0L</span>;<br><br>    <span class="hljs-comment">// state 对象</span><br>    <span class="hljs-keyword">private</span> ListState&lt;Long&gt; state;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">run</span><span class="hljs-params">(SourceContext&lt;String&gt; sourceContext)</span> <span class="hljs-keyword">throws</span> Exception &#123;<br>        <span class="hljs-keyword">final</span> <span class="hljs-type">Object</span> <span class="hljs-variable">lock</span> <span class="hljs-operator">=</span> sourceContext.getCheckpointLock();<br><br>        String[] names = <span class="hljs-keyword">new</span> <span class="hljs-title class_">String</span>[] &#123;<span class="hljs-string">&quot;panda&quot;</span>, <span class="hljs-string">&quot;sue&quot;</span>&#125;;<br><br>        <span class="hljs-keyword">while</span> (isRunning) &#123;<br>            <span class="hljs-keyword">synchronized</span> (lock) &#123;<br>                <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> <span class="hljs-variable">i</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">5</span>; i++) &#123;<br>                    <span class="hljs-type">String</span> <span class="hljs-variable">name</span> <span class="hljs-operator">=</span> names[RANDOM.nextInt(names.length)];<br>                    sourceContext.collect(name);<br>                    offset++;<br>                &#125;<br>            &#125;<br>            Thread.sleep(<span class="hljs-number">10000</span>);<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">cancel</span><span class="hljs-params">()</span> &#123;<br>        isRunning = <span class="hljs-literal">false</span>;<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">snapshotState</span><span class="hljs-params">(FunctionSnapshotContext context)</span> <span class="hljs-keyword">throws</span> Exception &#123;<br>        LOGGER.info(<span class="hljs-string">&quot;start to snapshot, current offset: &#123;&#125;&quot;</span>, offset);<br>        state.clear();<br>        state.add(offset);<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">initializeState</span><span class="hljs-params">(FunctionInitializationContext context)</span> <span class="hljs-keyword">throws</span> Exception &#123;<br>        LOGGER.info(<span class="hljs-string">&quot;stateful source function init...&quot;</span>);<br>        state = context.getOperatorStateStore()<br>                .getListState(<span class="hljs-keyword">new</span> <span class="hljs-title class_">ListStateDescriptor</span>&lt;&gt;(<span class="hljs-string">&quot;source-state&quot;</span>, LongSerializer.INSTANCE));<br><br>        <span class="hljs-keyword">for</span> (Long l : state.get()) &#123;<br>            offset = l;<br>        &#125;<br>    &#125;<br><br>&#125;<br></code></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><code class="hljs Java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">StatefulSinkFunction</span> <span class="hljs-keyword">implements</span> <span class="hljs-title class_">SinkFunction</span>&lt;Tuple2&lt;String, Integer&gt;&gt;, CheckpointedFunction &#123;<br><br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-type">Logger</span> <span class="hljs-variable">LOGGER</span> <span class="hljs-operator">=</span> LoggerFactory.getLogger(StatefulSinkFunction.class);<br><br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">transient</span> ListState&lt;Tuple2&lt;String, Integer&gt;&gt; state;<br><br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">final</span> <span class="hljs-type">int</span> threshold;<br><br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">final</span> List&lt;Tuple2&lt;String, Integer&gt;&gt; buffers;<br><br>    <span class="hljs-keyword">public</span> <span class="hljs-title function_">StatefulSinkFunction</span><span class="hljs-params">(<span class="hljs-type">int</span> threshold)</span> &#123;<br>        <span class="hljs-built_in">this</span>.threshold = threshold;<br>        <span class="hljs-built_in">this</span>.buffers = Lists.newArrayList();<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">invoke</span><span class="hljs-params">(Tuple2&lt;String, Integer&gt; value, Context context)</span> &#123;<br>        buffers.add(value);<br>        <span class="hljs-keyword">if</span> (buffers.size() == threshold) &#123;<br>            buffers.forEach(element -&gt; LOGGER.info(<span class="hljs-string">&quot;value: &#123;&#125;&quot;</span>, element));<br>            buffers.clear();<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">snapshotState</span><span class="hljs-params">(FunctionSnapshotContext context)</span> <span class="hljs-keyword">throws</span> Exception &#123;<br>        state.clear();<br>        state.addAll(buffers);<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">initializeState</span><span class="hljs-params">(FunctionInitializationContext context)</span> <span class="hljs-keyword">throws</span> Exception &#123;<br>        state = context.getOperatorStateStore()<br>                .getListState(<span class="hljs-keyword">new</span> <span class="hljs-title class_">ListStateDescriptor</span>&lt;&gt;(<span class="hljs-string">&quot;sink-state&quot;</span>, Types.TUPLE(Types.STRING, Types.INT)));<br><br>        <span class="hljs-keyword">if</span> (context.isRestored()) &#123;<br>            <span class="hljs-keyword">for</span> (Tuple2&lt;String, Integer&gt; element : state.get()) &#123;<br>                buffers.add(element);<br>            &#125;<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+<h1 id="Keyed-State"><a href="#Keyed-State" class="headerlink" title="Keyed State"></a>Keyed State</h1><p>顾名思义，Keyed State 是作用于 Keyed Stream 上的状态，<strong>它是根据数据流中的 key 来进行访问与更新的。</strong></p>
+<p>这是Keyed State的流处理图：<br><img src="/images/flink1.assets/keyedstate.png" srcset="/img/loading.gif" lazyload><br>在图中，我们可以观察到几个点：</p>
+<ul>
+<li>key 的哈希值相同的元素，尽管其 key 值不同，还是被分配到了同一分区</li>
+<li>在同一分区的状态存储中，key 值不同的元素，会生成不同的 state 副本<br>这意味着，Keyed State 在对应的算子任务中实际上会有多个，而不是一个，且当算子任务要访问或更新某个 Keyed State 时，是通过 key 值去映射得到的。这一点，在 StateTable 里得到了体现：</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs Java"><span class="hljs-keyword">public</span> S <span class="hljs-title function_">get</span><span class="hljs-params">(N namespace)</span> &#123;<br>    <span class="hljs-keyword">return</span> <span class="hljs-built_in">this</span>.get(<span class="hljs-built_in">this</span>.keyContext.getCurrentKey(), <span class="hljs-built_in">this</span>.keyContext.getCurrentKeyGroupIndex(), namespace);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>所以不同于non keyed state,Keyed state是每个算子有多个state，通过key来定位获取的。<br>下面，我们将对各类型的 Keyed State 展开梳理。</p>
+<h3 id="Value-State"><a href="#Value-State" class="headerlink" title="Value State"></a>Value State</h3><p>Value Sate 是一种保存 <strong>单个值</strong> 的状态。<br>这里整理一个基于Value State实现平均值计算的功能：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><code class="hljs Java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">AvgWithValueStateFlapMapFunction</span><br>        <span class="hljs-keyword">extends</span> <span class="hljs-title class_">RichFlatMapFunction</span>&lt;Tuple2&lt;String, Integer&gt;, Tuple2&lt;String, Double&gt;&gt; &#123;<br><br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-type">Logger</span> <span class="hljs-variable">LOGGER</span> <span class="hljs-operator">=</span> LoggerFactory.getLogger(AvgWithValueStateFlapMapFunction.class);<br><br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">transient</span> ValueState&lt;Tuple2&lt;Integer, Integer&gt;&gt; state;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">open</span><span class="hljs-params">(Configuration parameters)</span> &#123;<br><br>        ValueStateDescriptor&lt;Tuple2&lt;Integer, Integer&gt;&gt; descriptor =<br>                <span class="hljs-keyword">new</span> <span class="hljs-title class_">ValueStateDescriptor</span>&lt;&gt;(<span class="hljs-string">&quot;avg&quot;</span>, Types.TUPLE(Types.INT, Types.INT));<br><br>        state = getRuntimeContext().getState(descriptor);<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">flatMap</span><span class="hljs-params">(Tuple2&lt;String, Integer&gt; value, Collector&lt;Tuple2&lt;String, Double&gt;&gt; collector)</span> <span class="hljs-keyword">throws</span> Exception &#123;<br><br>        Tuple2&lt;Integer, Integer&gt; currentState = state.value();<br><br>        <span class="hljs-keyword">if</span> (currentState == <span class="hljs-literal">null</span>) &#123;<br>            currentState = Tuple2.of(<span class="hljs-number">0</span>, <span class="hljs-number">0</span>);<br>        &#125;<br><br>        <span class="hljs-comment">// 累加并更新状态</span><br>        currentState.f0 += <span class="hljs-number">1</span>;<br>        currentState.f1 += value.f1;<br>        state.update(currentState);<br><br>        LOGGER.info(<span class="hljs-string">&quot;key: &#123;&#125;, state: &#123;&#125;&quot;</span>, value.f0, state.value());<br><br>        <span class="hljs-comment">// 当累加元素达到 3，计算平均值</span><br>        <span class="hljs-keyword">if</span> (currentState.f0 &gt;= <span class="hljs-number">3</span>) &#123;<br>            collector.collect(Tuple2.of(value.f0, currentState.f1 / currentState.f0.doubleValue()));<br>            state.clear();<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<blockquote>
+<p>通过描述符获取 Keyed State 时，会将 Keyed State 注册到当前任务对应的 State Backend。<br>与 Operator State 不同，Keyed State 不需要用户手动声明 snapshot(…) 方法生成快照，而是由 backend 自行触发生成，此过程对用户透明。</p>
+</blockquote>
+<h3 id="List-State-1"><a href="#List-State-1" class="headerlink" title="List State"></a>List State</h3><p>定义同 Operator State 中的 List State。</p>
+<p>基于 List State 实现平均值计算的示例如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><code class="hljs Java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">AvgWithListStateFlapMapFunction</span><br>        <span class="hljs-keyword">extends</span> <span class="hljs-title class_">RichFlatMapFunction</span>&lt;Tuple2&lt;String, Integer&gt;, Tuple2&lt;String, Double&gt;&gt; &#123;<br><br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">transient</span> ListState&lt;Integer&gt; state;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">open</span><span class="hljs-params">(Configuration parameters)</span> &#123;<br>        ListStateDescriptor&lt;Integer&gt; descriptor = <span class="hljs-keyword">new</span> <span class="hljs-title class_">ListStateDescriptor</span>&lt;&gt;(<span class="hljs-string">&quot;avg&quot;</span>, Integer.class);<br>        state = getRuntimeContext().getListState(descriptor);<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">flatMap</span><span class="hljs-params">(Tuple2&lt;String, Integer&gt; value, Collector&lt;Tuple2&lt;String, Double&gt;&gt; collector)</span> <span class="hljs-keyword">throws</span> Exception &#123;<br><br>        state.add(value.f1);<br><br>        List&lt;Integer&gt; elements = Lists.newArrayList(state.get());<br>        <span class="hljs-comment">// 当累加元素达到 3，计算平均值</span><br>        <span class="hljs-keyword">if</span> (elements.size() &gt;= <span class="hljs-number">3</span>) &#123;<br>            <span class="hljs-type">Integer</span> <span class="hljs-variable">count</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>;<br>            <span class="hljs-type">Integer</span> <span class="hljs-variable">sum</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>;<br><br>            <span class="hljs-keyword">for</span> (Integer element : elements) &#123;<br>                count++;<br>                sum += element;<br>            &#125;<br><br>            collector.collect(Tuple2.of(value.f0, sum / count.doubleValue()));<br>            state.clear();<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="Map-State"><a href="#Map-State" class="headerlink" title="Map State"></a>Map State</h3><p>Map State 中文名为映射状态，底层数据结构为 Map，以键值对的形式存储状态。</p>
+<p>基于 Map State 实现平均值计算的示例如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><code class="hljs Java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">AvgWithMapStateFlapMapFunction</span><br>        <span class="hljs-keyword">extends</span> <span class="hljs-title class_">RichFlatMapFunction</span>&lt;Tuple2&lt;String, Integer&gt;, Tuple2&lt;String, Double&gt;&gt; &#123;<br><br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">transient</span> MapState&lt;String, Integer&gt; state;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">open</span><span class="hljs-params">(Configuration parameters)</span> &#123;<br>        MapStateDescriptor&lt;String, Integer&gt; descriptor = <span class="hljs-keyword">new</span> <span class="hljs-title class_">MapStateDescriptor</span>&lt;&gt;(<span class="hljs-string">&quot;avg&quot;</span>, String.class, Integer.class);<br>        state = getRuntimeContext().getMapState(descriptor);<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">flatMap</span><span class="hljs-params">(Tuple2&lt;String, Integer&gt; value, Collector&lt;Tuple2&lt;String, Double&gt;&gt; collector)</span> <span class="hljs-keyword">throws</span> Exception &#123;<br><br>        state.put(UUID.randomUUID().toString(), value.f1);<br>        List&lt;Integer&gt; elements = Lists.newArrayList(state.values());<br><br>        <span class="hljs-comment">// 当累加元素达到 3，计算平均值</span><br>        <span class="hljs-keyword">if</span> (elements.size() &gt;= <span class="hljs-number">3</span>) &#123;<br>            <span class="hljs-type">Integer</span> <span class="hljs-variable">count</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>;<br>            <span class="hljs-type">Integer</span> <span class="hljs-variable">sum</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>;<br><br>            <span class="hljs-keyword">for</span> (Integer element : elements) &#123;<br>                count++;<br>                sum += element;<br>            &#125;<br><br>            collector.collect(Tuple2.of(value.f0, sum / count.doubleValue()));<br>            state.clear();<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="Reducing-State-Aggregating-State"><a href="#Reducing-State-Aggregating-State" class="headerlink" title="Reducing State &amp; Aggregating State"></a>Reducing State &amp; Aggregating State</h3><p>Reducing State 和 Aggregating State 都是对所有（窗口内）元素进行聚合的状态，两者的区别在于：</p>
+<ul>
+<li>Reducing State 只有输入类型（IN），Aggregating State 既有输入类型（IN）又有输出类型（OUT）</li>
+<li>Reducing State 通常与 ReduceFunction 绑定，Aggregating State 通常与 AggregateFunction 绑定</li>
+</ul>
+<p>那么，Reducing State 和 Aggregating State 与 ReduceFunction 和 AggregateFunction 是否有关系？</p>
+<p>答案是肯定的。当我们调用 WindowedStream 的 reduce(…) 方法或者 aggregate(…) 方法，它在创建窗口的过程中会相应地创建 Reducing State 或者 Aggregating State，这在 WindowOperatorBuilder 的源码得到了体现：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs Java"><span class="hljs-keyword">public</span> &lt;ACC, V, R&gt; WindowOperator&lt;K, T, ?, R, W&gt; aggregate(AggregateFunction&lt;T, ACC, V&gt; aggregateFunction, ProcessWindowFunction&lt;V, R, K, W&gt; windowFunction, TypeInformation&lt;ACC&gt; accumulatorType) &#123;<br>    Preconditions.checkNotNull(aggregateFunction, <span class="hljs-string">&quot;AggregateFunction cannot be null&quot;</span>);<br>    Preconditions.checkNotNull(windowFunction, <span class="hljs-string">&quot;ProcessWindowFunction cannot be null&quot;</span>);<br>    <span class="hljs-keyword">if</span> (aggregateFunction <span class="hljs-keyword">instanceof</span> RichFunction) &#123;<br>        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">UnsupportedOperationException</span>(<span class="hljs-string">&quot;This aggregate function cannot be a RichFunction.&quot;</span>);<br>    &#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (<span class="hljs-built_in">this</span>.evictor != <span class="hljs-literal">null</span>) &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-built_in">this</span>.buildEvictingWindowOperator(<span class="hljs-keyword">new</span> <span class="hljs-title class_">InternalAggregateProcessWindowFunction</span>(aggregateFunction, windowFunction));<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        AggregatingStateDescriptor&lt;T, ACC, V&gt; stateDesc = <span class="hljs-keyword">new</span> <span class="hljs-title class_">AggregatingStateDescriptor</span>(<span class="hljs-string">&quot;window-contents&quot;</span>, aggregateFunction, accumulatorType.createSerializer(<span class="hljs-built_in">this</span>.config));<br>        <span class="hljs-keyword">return</span> <span class="hljs-built_in">this</span>.buildWindowOperator(stateDesc, <span class="hljs-keyword">new</span> <span class="hljs-title class_">InternalSingleValueProcessWindowFunction</span>(windowFunction));<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>需要注意的是，KeyedStream 中 sum(…) 和 reduce(…) 方法所依赖的底层状态由 ValueState 实现，而不是 Reducing State 或 Aggregating State。其管理类 StreamGroupedReduceOperator 的源码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs Java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">open</span><span class="hljs-params">()</span> <span class="hljs-keyword">throws</span> Exception &#123;<br>    <span class="hljs-built_in">super</span>.open();<br>    ValueStateDescriptor&lt;IN&gt; stateId = <span class="hljs-keyword">new</span> <span class="hljs-title class_">ValueStateDescriptor</span>(<span class="hljs-string">&quot;_op_state&quot;</span>, <span class="hljs-built_in">this</span>.serializer);<br>    <span class="hljs-built_in">this</span>.values = (ValueState)<span class="hljs-built_in">this</span>.getPartitionedState(stateId);<br>&#125;<br><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">processElement</span><span class="hljs-params">(StreamRecord&lt;IN&gt; element)</span> <span class="hljs-keyword">throws</span> Exception &#123;<br>    <span class="hljs-type">IN</span> <span class="hljs-variable">value</span> <span class="hljs-operator">=</span> element.getValue();<br>    <span class="hljs-type">IN</span> <span class="hljs-variable">currentValue</span> <span class="hljs-operator">=</span> <span class="hljs-built_in">this</span>.values.value();<br>    <span class="hljs-keyword">if</span> (currentValue != <span class="hljs-literal">null</span>) &#123;<br>        <span class="hljs-type">IN</span> <span class="hljs-variable">reduced</span> <span class="hljs-operator">=</span> ((ReduceFunction)<span class="hljs-built_in">this</span>.userFunction).reduce(currentValue, value);<br>        <span class="hljs-built_in">this</span>.values.update(reduced);<br>        <span class="hljs-built_in">this</span>.output.collect(element.replace(reduced));<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        <span class="hljs-built_in">this</span>.values.update(value);<br>        <span class="hljs-built_in">this</span>.output.collect(element.replace(value));<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h1 id="State-TTL"><a href="#State-TTL" class="headerlink" title="State TTL"></a>State TTL</h1><p>Cleanup of Expired State<br>Cleanup in full snapshot<br>Incremental cleanup<br>Cleanup during RocksDB compaction</p>
+<h1 id="State-Backend"><a href="#State-Backend" class="headerlink" title="State Backend"></a>State Backend</h1><p>State Backend 中文名为状态后端，是 状态的管理组件。它主要解决两件事：</p>
+<p>管理本地状态，包括访问、存储与更新<br>当 checkpoint 被激活时，决定状态同步的方式和位置</p>
+<blockquote>
+<p>由于早期 State Backend 的设计问题，很多人误以为状态快照是由 State Backend 发送到远程存储的。实际上，State Backend 只决定了本地状态存储的格式和位置，而状态快照的生成和传输是由 TaskManager 自身处理的。</p>
+</blockquote>
+<p>在 Flink 中，已经预设了两种 State Backend，分别是：</p>
+<ul>
+<li>HashMapStateBackend</li>
+<li>EmbeddedRocksDBStateBackend<br>默认情况下，应用程序会使用 HashMapStateBackend。</li>
+</ul>
+<h3 id="HashMapStateBackend"><a href="#HashMapStateBackend" class="headerlink" title="HashMapStateBackend"></a>HashMapStateBackend</h3><p>HashMapStateBackend 将状态信息存储在 Java 内存堆中。</p>
+<p>因为是在内存中管理状态，所以 HashMapStateBackend 具备 <strong>快速、低延时</strong> 的优点，但与此同时，其所能管理的状态大小受内存大小的限制，有 <strong>OOM</strong> 的风险。</p>
+<blockquote>
+<p>使用 HashMapStateBackend 时，官方建议将 managed memory （堆外内存）设置为 0，以便于分配更多的 JVM 内存。</p>
+</blockquote>
+<h3 id="EmbeddedRocksDBStateBackend"><a href="#EmbeddedRocksDBStateBackend" class="headerlink" title="EmbeddedRocksDBStateBackend"></a>EmbeddedRocksDBStateBackend</h3><p>EmbeddedRocksDBStateBackend 是一种将状态信息保存在 RocksDB 数据库的状态后端。对于 RocksDB，很多人以为是一个需要在集群上运行且由专业人员管理的分布式数据库，但其实 <strong>RocksDB 是一个用于快速存储键值对数据的嵌入式数据库</strong>。</p>
+<h4 id="How-it-works"><a href="#How-it-works" class="headerlink" title="How it works"></a>How it works</h4><p>当 Flink 作业运行时，RocksDB 会内嵌到 TaskManager 进程中，这一点，我们可以通过查看 TaskManager 的线程 ID 来验证：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs Shell"><span class="hljs-meta prompt_">$ </span><span class="language-bash">ps -T -p 32513 | grep -i rocksdb</span><br>32513 32633 ?        00:00:00 rocksdb:low0<br>32513 32634 ?        00:00:00 rocksdb:high0<br></code></pre></td></tr></table></figure>
+<p>当 EmbeddedRocksDBStateBackend 启用时，状态首先会被写到 off-heap 内存区（非 JVM 内存），然后在达到指定阈值后才刷新到本地磁盘中，如下图所示：<br><img src="/images/flink1.assets/statebackendembedded.png" srcset="/img/loading.gif" lazyload></p>
+<p>EmbeddedRocksDBStateBackend 的这种工作方式，意味着：</p>
+<ul>
+<li>它管理的状态大小不受内存限制（无 OOM 风险），而是受磁盘空间限制</li>
+<li>它会经历序列化和反序列化过程，需要消耗更多的资源以及处理时间</li>
+</ul>
+<h4 id="Compare-with-HashMapStateBackend"><a href="#Compare-with-HashMapStateBackend" class="headerlink" title="Compare with HashMapStateBackend"></a>Compare with HashMapStateBackend</h4><p>综上所述，EmbeddedRocksDBStateBackend 与 HashMapStateBackend 的对比如下：</p>
+<table>
+<thead>
+<tr>
+<th>特性&#x2F;状态后端</th>
+<th>EmbeddedRocksDBStateBackend</th>
+<th>HashMapStateBackend</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>状态处理规模</td>
+<td>大</td>
+<td>小</td>
+</tr>
+<tr>
+<td>状态处理时间</td>
+<td>慢</td>
+<td>快</td>
+</tr>
+<tr>
+<td>是否支持增量 checkpoint</td>
+<td>是</td>
+<td>否</td>
+</tr>
+</tbody></table>
+<h4 id="Setting-State-Backend"><a href="#Setting-State-Backend" class="headerlink" title="Setting State Backend"></a>Setting State Backend</h4><p>我们可以在配置文件 flink-conf.yaml 设置默认的 State Backend，它将对整个集群的所有作业生效，例如：</p>
+<figure class="highlight yml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs yml"><span class="hljs-comment"># The backend that will be used to store operator state checkpoints</span><br><span class="hljs-attr">state.backend:</span> <span class="hljs-string">hashmap</span><br><br><span class="hljs-comment"># Directory for storing checkpoints</span><br><span class="hljs-attr">state.checkpoints.dir:</span> <span class="hljs-string">hdfs://namenode:40010/flink/checkpoints</span><br></code></pre></td></tr></table></figure>
+<blockquote>
+<p>state.checkpoints.dir 是用来存储 checkpoint 快照数据的存储目录（可以是远程）。</p>
+</blockquote>
+<p>当然，我们也可以在代码中直接设置 State Backend，以覆盖默认设置：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs Java"><span class="hljs-type">StreamExecutionEnvironment</span> <span class="hljs-variable">env</span> <span class="hljs-operator">=</span> StreamExecutionEnvironment.getExecutionEnvironment();<br>env.setStateBackend(<span class="hljs-keyword">new</span> <span class="hljs-title class_">HashMapStateBackend</span>());<br></code></pre></td></tr></table></figure>
+<p>如果想要使用 EmbeddedRocksDBStateBackend，还需要导入以下依赖包：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs xml"><span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-statebackend-rocksdb_$&#123;scala.binary.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;flink.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">scope</span>&gt;</span>provided<span class="hljs-tag">&lt;/<span class="hljs-name">scope</span>&gt;</span><br><span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br></code></pre></td></tr></table></figure>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Flink/" class="category-chain-item">Flink</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Flink的状态管理</div>
+      <div>https://swallowgo.github.io/2026/07/28/flink6/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>Author</div>
+          <div>QINGDONG Zeng</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>Posted on</div>
+          <div>July 28, 2026</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>Licensed under</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - Attribution">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/07/28/flink5/" title="Flink Watermark">
+                        <span class="hidden-mobile">Flink Watermark</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>Table of Contents</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">Keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>DD</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>JOJO</span></a> <br> <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">Blog works best with JavaScript enabled</div>
+  </noscript>
+</body>
+</html>
