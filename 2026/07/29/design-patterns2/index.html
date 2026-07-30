@@ -30,8 +30,9 @@
 <meta property="og:image" content="https://swallowgo.github.io/images/design-patterns2.assets/simplefactory.png">
 <meta property="og:image" content="https://swallowgo.github.io/images/design-patterns2.assets/simplefactory.png">
 <meta property="og:image" content="https://swallowgo.github.io/images/design-patterns2.assets/abstractfactory.png">
+<meta property="og:image" content="https://swallowgo.github.io/images/design-patterns2.assets/prototype.png">
 <meta property="article:published_time" content="2026-07-29T08:28:34.000Z">
-<meta property="article:modified_time" content="2026-07-30T03:29:35.301Z">
+<meta property="article:modified_time" content="2026-07-30T06:51:34.296Z">
 <meta property="article:author" content="QINGDONG Zeng">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://swallowgo.github.io/images/design-patterns2.assets/singleton.png">
@@ -227,7 +228,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          1.8k words
+          2.4k words
         
       </span>
     
@@ -238,7 +239,7 @@
         
         
         
-          16 mins
+          21 mins
         
       </span>
     
@@ -287,8 +288,7 @@
 <p>创建型模式（Creational）：关注对象的创建过程，解耦对象的创建与使用（如：单例模式、工厂模式、抽象工厂模式、建造者模式、原型模式、生成器模式）。</p>
 <p>结构型模式（Structural）：关注类或对象的组合，形成更大的结构（如：代理模式、适配器模式、装饰器模式、外观模式、享元模式等）。</p>
 <p>行为型模式（Behavioral）：关注对象之间的通信、职责分配与算法实现（如：模板方法模式、策略模式、观察者模式、责任链模式、状态模式等）。</p>
-<h2 id="创建型模式"><a href="#创建型模式" class="headerlink" title="创建型模式"></a>创建型模式</h2><p>确保一个类只有一个实例，并且提供该实例的全局访问点。</p>
-<h3 id="单例模式"><a href="#单例模式" class="headerlink" title="单例模式"></a>单例模式</h3><p>确保一个类只有一个实例，并提供该实例的全局访问点, 本文介绍6中常用的实现方式</p>
+<h2 id="创建型模式"><a href="#创建型模式" class="headerlink" title="创建型模式"></a>创建型模式</h2><h3 id="单例模式"><a href="#单例模式" class="headerlink" title="单例模式"></a>单例模式</h3><p>确保一个类只有一个实例，并提供该实例的全局访问点, 本文介绍6中常用的实现方式</p>
 <h4 id="类图"><a href="#类图" class="headerlink" title="类图"></a>类图</h4><p>使用一个私有构造函数、一个私有静态变量以及一个公有静态函数来实现。</p>
 <p>私有构造函数保证了不能通过构造函数来创建对象实例，只能通过公有静态函数返回唯一的私有静态变量。<br><img src="/images/design-patterns2.assets/singleton.png" srcset="/img/loading.gif" lazyload></p>
 <h4 id="实现方式"><a href="#实现方式" class="headerlink" title="实现方式"></a>实现方式</h4><h5 id="懒汉式-线程不安全"><a href="#懒汉式-线程不安全" class="headerlink" title="懒汉式-线程不安全"></a>懒汉式-线程不安全</h5><p>多线程下可能多次实例化</p>
@@ -363,7 +363,62 @@
 <td>✅(产品族) &#x2F; ❌(产品类型)</td>
 </tr>
 </tbody></table>
-<h3 id="建造者模式"><a href="#建造者模式" class="headerlink" title="建造者模式"></a>建造者模式</h3><h3 id="原型模式"><a href="#原型模式" class="headerlink" title="原型模式"></a>原型模式</h3><h3 id="生成器模式"><a href="#生成器模式" class="headerlink" title="生成器模式"></a>生成器模式</h3>
+<h3 id="建造者模式"><a href="#建造者模式" class="headerlink" title="建造者模式"></a>建造者模式</h3><p>也叫生成器模式.<br>这里网络上众说纷纭。有的是说内部静态类实现创建，不提供setter，链式调用setter返回Builder本身，然后在build()方法做校验。关注怎么组装对象。</p>
+<p>又有说是隐藏创建对象的建造过程 &amp; 细节，使得用户在不知对象的建造过程 &amp; 细节的情况下，就可直接创建复杂的对象。关注降低对象创建复杂度和隔离创建过程？</p>
+<h3 id="原型模式"><a href="#原型模式" class="headerlink" title="原型模式"></a>原型模式</h3><p>使用原型实例指定要创建对象的类型，通过复制这个原型来创建新对象。</p>
+<h4 id="类图-1"><a href="#类图-1" class="headerlink" title="类图"></a>类图</h4><p><img src="/images/design-patterns2.assets/prototype.png" srcset="/img/loading.gif" lazyload></p>
+<p><strong>只有在对象创建成本极高，或者需要保护原始对象状态的时候才需要。而且这里还设计深浅拷贝的问题！</strong></p>
+<h4 id="实现方式-2"><a href="#实现方式-2" class="headerlink" title="实现方式"></a>实现方式</h4><ol>
+<li>实现Java原生的Cloneable接口（默认浅拷贝）</li>
+<li>使用序列化 &#x2F; JSON 工具（推荐：天然实现深拷贝）</li>
+<li>拷贝构造函数（Copy Constructor）</li>
+</ol>
+<h4 id="在SpringBoot中的应用-3"><a href="#在SpringBoot中的应用-3" class="headerlink" title="在SpringBoot中的应用"></a>在SpringBoot中的应用</h4><ol>
+<li><p>Spring Bean 的 @Scope(“prototype”)（原型作用域）<br>在 Spring 中，我们最常通过 @Scope(“prototype”) 来使用原型模式。</p>
+<ul>
+<li>单例模式 (singleton)：Spring 容器启动时初始化，全 JVM 共享同一个 Bean 实例。</li>
+<li>原型模式 (prototype)：Spring 容器本身充当了原型注册表（Prototype Registry）。每次调用 context.getBean(OrderReportTask.class) 时，Spring 都会重新执行创建流程，返回一个全新的 Bean 对象。</li>
+</ul>
+</li>
+<li><p>对象属性映射工具（Spring BeanUtils.copyProperties）</p>
+<p> 在开发 API 接口时，我们经常需要把 DTO &#x2F; Entity 的数据快速复制到 VO 中：</p>
+ <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs Java"><span class="hljs-type">UserEntity</span> <span class="hljs-variable">entity</span> <span class="hljs-operator">=</span> userRepository.findById(id);<br><span class="hljs-type">UserVO</span> <span class="hljs-variable">vo</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">UserVO</span>();<br><br><span class="hljs-comment">// 将 entity 的属性直接复制到 vo 里面（本质上也是基于原型的拷贝 思想）</span><br>BeanUtils.copyProperties(entity, vo);<br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="创建型小结"><a href="#创建型小结" class="headerlink" title="创建型小结"></a>创建型小结</h3><table>
+<thead>
+<tr>
+<th>设计模式</th>
+<th>核心一句话总结</th>
+<th>适用场景 &#x2F; 核心痛点</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>单例模式 (Singleton)</td>
+<td>全局只有一个实例</td>
+<td>线程池、配置中心、连接池等资源消耗大且需全局统一的对象</td>
+</tr>
+<tr>
+<td>工厂方法模式 (Factory Method)</td>
+<td>延迟到子类工厂去 new 对应产品</td>
+<td>单一产品创建</td>
+</tr>
+<tr>
+<td>抽象工厂模式 (Abstract Factory)</td>
+<td>一次性生产一套相关联的“产品族”</td>
+<td>跨平台&#x2F;多组件库整体切换（如 Tomcat 切换为 Undertow、HttpClient 切换为 OkHttp）</td>
+</tr>
+<tr>
+<td>建造者模式 (Builder)</td>
+<td>分步&#x2F;链式组装复杂的不可变对象</td>
+<td>属性极多、有可选&#x2F;必填校验、要求 final 线程安全的类</td>
+</tr>
+<tr>
+<td>原型模式 (Prototype)</td>
+<td>拿现有对象直接 clone 副本</td>
+<td>对象创建成本极高（耗时&#x2F;耗资源），或者需要深拷贝快照</td>
+</tr>
+</tbody></table>
+<h2 id="结构型"><a href="#结构型" class="headerlink" title="结构型"></a>结构型</h2>
                 
               </div>
             
